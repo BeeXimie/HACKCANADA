@@ -3,8 +3,12 @@ from flask import Flask, request, g
 from dotenv import load_dotenv
 from auth import auth0
 from routes import main_bp
+from dotenv import load_dotenv
+import os
 
 load_dotenv()
+print(f"API Key loaded: {os.getenv('GEMINI_API_KEY')[:5]}...") # Just to verify it's working
+
 
 app = Flask(__name__)
 app.secret_key = os.getenv('AUTH0_SECRET')
