@@ -89,9 +89,9 @@ async def onboarding():
 
 # --- Feature Routes ---
 
-@main_bp.route('/expenses', methods=['GET', 'POST'])
-async def expenses():
-    """Expenses and tuition page"""
+@main_bp.route('/essay', methods=['GET', 'POST'])
+async def essay():
+    """Essay Vault page"""
     user = await auth0.get_user(g.store_options)
     if not user:
         return redirect(url_for('main.login'))
@@ -107,38 +107,19 @@ async def expenses():
         session['essay_vault'] = {
             'q1': q1, 'q2': q2, 'q3': q3, 'q4': q4
         }
-        return redirect(url_for('main.expenses'))
+        return redirect(url_for('main.essay'))
         
     vault_data = session.get('essay_vault', {})
-    return render_template('expenses.html', user=user, vault=vault_data)
+    return render_template('essay_vault.html', user=user, vault=vault_data)
 
-@main_bp.route('/savings')
-async def savings():
-    """You saved this much money page"""
+
+@main_bp.route('/applied')
+async def applied():
+    """Applied Tracker Kanban page"""
     user = await auth0.get_user(g.store_options)
     if not user:
         return redirect(url_for('main.login'))
-        
-    # Provide mock data for the Kanban board until SQL is fully configured
-    mock_applications = {
-        'Saved': [
-            {'title': 'National Merit Scholarship', 'amount': '$2,500', 'deadline': 'Oct 15', 'company': 'NMSC'},
-            {'title': 'Coca-Cola Scholars', 'amount': '$20k', 'deadline': 'Oct 31', 'company': 'Coca-Cola'}
-        ],
-        'Applying': [
-            {'title': 'Google Lime Scholarship', 'amount': '$10k', 'deadline': 'Dec 1', 'company': 'Google'}
-        ],
-        'Applied': [
-            {'title': 'Gates Scholarship', 'amount': 'Full Ride', 'deadline': 'Sep 15', 'company': 'Gates Foundation'}
-        ],
-        'Interview': [],
-        'Won': [
-            {'title': 'Local Rotary Club', 'amount': '$1,000', 'deadline': 'Past', 'company': 'Rotary'}
-        ],
-        'Rejected': []
-    }
-        
-    return render_template('savings.html', user=user, mock_applications=mock_applications)
+    return render_template('applied_tracker.html', user=user)
 
 @main_bp.route('/scholarships')
 async def scholarships():
