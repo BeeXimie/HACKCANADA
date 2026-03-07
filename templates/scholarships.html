@@ -1,38 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Find Scholarships</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Scholarships – ScholarSync</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .nav-active { background: #eef2ff; color: #4338ca; font-weight: 600; }
+    .nav-active svg { color: #4f46e5; }
+    .card-hover:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  </style>
 </head>
-<body>
-<div class="container">
-    <div class="card">
-        <h1>Scholarship Matches</h1>
-        <p>Based on your profile, here are some scholarships you might be eligible for:</p>
-        
-        <div class="scholarship-list" style="margin-top: 1.5rem; text-align: left;">
-            <div class="scholarship-card" style="padding: 1rem; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem;">
-                <h3>Merit Excellence Grant</h3>
-                <p><strong>Amount:</strong> $5,000</p>
-                <p><strong>Deadline:</strong> October 15</p>
-                <a href="#" class="button" style="padding: 0.5rem 1rem; display: inline-block; margin-top: 0.5rem;">Apply Now</a>
+<body class="min-h-screen bg-slate-50 flex font-sans">
+
+  <!-- Mobile Overlay -->
+  <div id="sidebar-overlay" class="fixed inset-0 z-40 bg-slate-900/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity lg:hidden" onclick="closeSidebar()"></div>
+
+  <!-- ===== Sidebar ===== -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform -translate-x-full transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0">
+    <div class="h-full flex flex-col">
+      <div class="h-16 flex items-center px-6 border-b border-slate-200">
+        <a href="/" class="flex items-center gap-2 text-indigo-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          <span class="text-xl font-bold tracking-tight text-slate-900">Scholar<span class="text-indigo-600">Sync</span></span>
+        </a>
+      </div>
+      <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+        <a href="/" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+          <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </a>
+        <a href="/profile" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+          <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
+        </a>
+        <a href="/recommendations" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+          <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+          Recommendations
+        </a>
+        <a href="/scholarships" class="flex items-center gap-3 px-3 py-2.5 rounded-xl nav-active transition-colors">
+          <svg class="h-5 w-5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          My Scholarships
+        </a>
+        <a href="/essay" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+          <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>
+          Essay Vault
+        </a>
+        <a href="/applied" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+          <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Applied Tracker
+        </a>
+      </nav>
+      <div class="p-4 border-t border-slate-200">
+        <div class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors">
+          {% if user and user.picture %}
+            <img src="{{ user.picture }}" alt="Profile" class="h-10 w-10 rounded-full object-cover shrink-0 ring-2 ring-indigo-100">
+          {% else %}
+            <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold shrink-0">
+              {{ user.name[0] | upper if user and user.name else 'U' }}
             </div>
-            
-            <div class="scholarship-card" style="padding: 1rem; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem;">
-                <h3>Community Tech Scholarship</h3>
-                <p><strong>Amount:</strong> $2,500</p>
-                <p><strong>Deadline:</strong> November 1</p>
-                <a href="#" class="button" style="padding: 0.5rem 1rem; display: inline-block; margin-top: 0.5rem;">Apply Now</a>
-            </div>
+          {% endif %}
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-slate-900 truncate">{{ user.name if user else 'User' }}</p>
+            <p class="text-xs text-slate-500 truncate">{{ user.email if user else '' }}</p>
+          </div>
+          <a href="/logout" class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Logout">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </a>
         </div>
-        
-        <div class="actions" style="margin-top: 2rem;">
-            <a href="/recommendations" class="button">View AI Recommendations</a>
-            <a href="/" class="button" style="background-color: var(--secondary-color);">Back to Home</a>
-        </div>
+      </div>
     </div>
-</div>
+  </aside>
+
+  <!-- ===== Main Content ===== -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center gap-4">
+        <button onclick="openSidebar()" class="lg:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+        </button>
+        <h1 class="text-lg font-bold text-slate-900">My Scholarships</h1>
+      </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+      <div class="max-w-5xl mx-auto space-y-6">
+
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">Scholarship Matches</h2>
+          <p class="mt-1 text-sm text-slate-500">Based on your profile, here are scholarships you might be eligible for.</p>
+        </div>
+
+        {% if scholarships %}
+          <div class="space-y-4">
+            {% for s in scholarships %}
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm card-hover transition-shadow">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h3 class="text-lg font-bold text-slate-900">{{ s.name or s.title or 'Scholarship' }}</h3>
+                  {% if s.amount %}<p class="text-sm text-emerald-600 font-semibold mt-1">${{ s.amount }}</p>{% endif %}
+                  {% if s.deadline %}<p class="text-xs text-slate-500 mt-1">Deadline: {{ s.deadline }}</p>{% endif %}
+                  {% if s.match_score %}<p class="text-xs text-indigo-600 font-medium mt-1">AI Match: {{ s.match_score }}%</p>{% endif %}
+                </div>
+                <a href="{{ s.url or '#' }}" target="_blank" class="shrink-0 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors">Apply Now</a>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <!-- Placeholder cards -->
+          <div class="space-y-4">
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h3 class="text-lg font-bold text-slate-900">Merit Excellence Grant</h3>
+                  <p class="text-sm text-emerald-600 font-semibold mt-1">$5,000</p>
+                  <p class="text-xs text-slate-500 mt-1">Deadline: October 15</p>
+                </div>
+                <a href="#" class="shrink-0 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors">Apply Now</a>
+              </div>
+            </div>
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h3 class="text-lg font-bold text-slate-900">Community Tech Scholarship</h3>
+                  <p class="text-sm text-emerald-600 font-semibold mt-1">$2,500</p>
+                  <p class="text-xs text-slate-500 mt-1">Deadline: November 1</p>
+                </div>
+                <a href="#" class="shrink-0 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors">Apply Now</a>
+              </div>
+            </div>
+          </div>
+          <div class="text-center py-8">
+            <p class="text-slate-400 text-sm">More scholarships will appear as your teammate's scraper database is connected.</p>
+          </div>
+        {% endif %}
+
+        <div class="flex gap-3">
+          <a href="/recommendations" class="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors">View AI Recommendations</a>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function openSidebar() {
+      document.getElementById('sidebar').classList.remove('-translate-x-full');
+      document.getElementById('sidebar-overlay').classList.remove('opacity-0','pointer-events-none');
+      document.getElementById('sidebar-overlay').classList.add('opacity-100');
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.add('-translate-x-full');
+      document.getElementById('sidebar-overlay').classList.add('opacity-0','pointer-events-none');
+      document.getElementById('sidebar-overlay').classList.remove('opacity-100');
+    }
+  </script>
 </body>
 </html>

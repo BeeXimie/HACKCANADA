@@ -1,52 +1,663 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>User Profile - Flask + Auth0</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile – ScholarSync</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .nav-active { background: #eef2ff; color: #4338ca; font-weight: 600; }
+    .nav-active svg { color: #4f46e5; }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+      border-color: #6366f1;
+    }
+    .save-btn { transition: all 0.2s; }
+    .save-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(79,70,229,0.4); }
+    .card-hover:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    
+    /* Edit Mode Toggles */
+    .view-mode-active .edit-only { display: none !important; }
+    .edit-mode-active .view-only { display: none !important; }
+    
+    /* Read-only Data Styles */
+    .data-text {
+      font-size: 0.95rem;
+      color: #1e293b;
+      font-weight: 500;
+      padding: 0.5rem 0;
+      min-height: 2.5rem;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+    .data-empty {
+      color: #94a3b8;
+      font-style: italic;
+      font-weight: 400;
+    }
+  </style>
 </head>
-<body>
-<div class="container">
-    <div class="card">
-        <img src="https://cdn.auth0.com/quantum-assets/dist/latest/logos/auth0/auth0-lockup-en-ondark.png"
-             alt="Auth0 Logo" class="logo">
-        <h1>User Profile</h1>
-        
-        <div class="profile-details">
-            {% if user.picture %}
-            <img src="{{ user.picture }}" alt="Profile" class="profile-pic-large">
-            {% endif %}
-            
-            <div class="profile-info">
-                <h2>{{ user.name }}</h2>
-                <p class="email">{{ user.email }}</p>
-                
-                <div class="profile-data">
-                    <h3>Profile Information</h3>
-                    <dl>
-                        <dt>User ID:</dt>
-                        <dd>{{ user.sub }}</dd>
-                        
-                        {% if user.nickname %}
-                        <dt>Nickname:</dt>
-                        <dd>{{ user.nickname }}</dd>
-                        {% endif %}
-                        
-                        {% if user.updated_at %}
-                        <dt>Last Updated:</dt>
-                        <dd>{{ user.updated_at }}</dd>
-                        {% endif %}
-                    </dl>
-                </div>
+<body class="min-h-screen bg-slate-50 flex font-sans">
+
+  <!-- Mobile Overlay -->
+  <div id="sidebar-overlay" class="fixed inset-0 z-40 bg-slate-900/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity lg:hidden" onclick="closeSidebar()"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform -translate-x-full transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0">
+    <div class="h-full flex flex-col">
+
+      <!-- Logo -->
+      <div class="h-16 flex items-center px-6 border-b border-slate-200">
+        <a href="/" class="flex items-center gap-2 text-indigo-600">
+          <!-- GraduationCap icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+          </svg>
+          <span class="text-xl font-bold tracking-tight text-slate-900">Scholar<span class="text-indigo-600">Sync</span></span>
+        </a>
+      </div>
+
+      <!-- Nav -->
+      <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+        <a href="/" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+          <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </a>
+        <a href="/profile" class="flex items-center gap-3 px-3 py-2.5 rounded-xl nav-active transition-colors">
+          <svg class="h-5 w-5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
+        </a>
+        <a href="/recommendations" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+          <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+          Recommendations
+        </a>
+        <a href="/scholarships" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+          <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          My Scholarships
+        </a>
+        <a href="/essay" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+          <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>
+          Essay Vault
+        </a>
+        <a href="/applied" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+          <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Applied Tracker
+        </a>
+      </nav>
+
+      <!-- User Footer -->
+      <div class="p-4 border-t border-slate-200">
+        <div class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors">
+          {% if user and user.picture %}
+            <img src="{{ user.picture }}" alt="Profile" class="h-10 w-10 rounded-full object-cover shrink-0 ring-2 ring-indigo-100">
+          {% else %}
+            <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold shrink-0">
+              {{ user.name[0] | upper if user and user.name else 'U' }}
             </div>
+          {% endif %}
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-slate-900 truncate">{{ user.name if user else 'Guest' }}</p>
+            <p class="text-xs text-slate-500 truncate">{{ user.email if user else '' }}</p>
+          </div>
+          <a href="/logout" title="Log out" class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+    <!-- Top Header -->
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0">
+      <div class="flex items-center gap-4">
+        <button onclick="openSidebar()" class="lg:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+        </button>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900">My Profile</h1>
+          <p class="text-xs text-slate-500 hidden sm:block">Manage your account and scholarship preferences</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="toggle-edit-btn" onclick="toggleEditMode()" class="flex items-center gap-2 px-4 py-2 text-sm text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors font-semibold shadow-sm border border-indigo-100">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          <span id="toggle-edit-text">Edit Profile</span>
+        </button>
+        <a href="/logout" class="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Log Out
+        </a>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+      <div class="max-w-4xl mx-auto space-y-8">
+
+        <!-- Profile completeness banner -->
+        <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl p-6 text-white shadow-lg">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <p class="text-indigo-100 text-sm font-medium mb-1">Profile Strength</p>
+              <h2 class="text-xl font-bold">Complete your profile to unlock better matches</h2>
+              <p class="text-indigo-100 text-sm mt-1">Users with full profiles receive 3× more relevant scholarship suggestions.</p>
+            </div>
+            <div class="shrink-0 text-center">
+              <div class="relative h-16 w-16">
+                <svg viewBox="0 0 36 36" class="h-16 w-16 -rotate-90">
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="3"/>
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="white" stroke-width="3"
+                    stroke-dasharray="60 100" stroke-linecap="round"/>
+                </svg>
+                <span class="absolute inset-0 flex items-center justify-center text-sm font-bold">60%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Info Card (read-only from Auth0) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm card-hover transition-shadow">
+          <div class="px-6 pt-6 pb-4 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-slate-900 text-lg">Account Information</h3>
+              <p class="text-sm text-slate-500 mt-0.5">Pulled from your Auth0 account</p>
+            </div>
+            <span class="px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-500 rounded-full">Read-only</span>
+          </div>
+          <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+            {% if user and user.picture %}
+              <img src="{{ user.picture }}" alt="Profile Photo" class="h-20 w-20 rounded-2xl object-cover ring-4 ring-indigo-50 shrink-0">
+            {% else %}
+              <div class="h-20 w-20 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold shrink-0">
+                {{ user.name[0] | upper if user and user.name else 'U' }}
+              </div>
+            {% endif %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Full Name</label>
+                <p class="text-slate-900 font-medium">{{ user.name if user else '—' }}</p>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Email Address</label>
+                <p class="text-slate-900 font-medium">{{ user.email if user else '—' }}</p>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Auth ID</label>
+                <p class="text-xs text-slate-400 font-mono truncate">{{ user.sub if user else '—' }}</p>
+              </div>
+            </div>
+          </div>
         </div>
         
-        <div class="actions">
-            <a href="/" class="button">Back to Home</a>
-            <a href="/logout" class="button logout">Log Out</a>
+        <!-- Uploaded Files Section -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm card-hover transition-shadow mb-6">
+          <div class="px-6 pt-6 pb-4 border-b border-slate-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="h-9 w-9 rounded-xl bg-slate-100 flex items-center justify-center">
+                <svg class="h-5 w-5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-slate-900">Uploaded Documents</h3>
+                <p class="text-sm text-slate-500">Files provided during onboarding</p>
+              </div>
+            </div>
+            <!-- Future link to trigger file upload modal -->
+            <button class="text-sm font-medium text-indigo-600 hover:text-indigo-800 edit-only">Manage Files</button>
+          </div>
+          <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50">
+              <div class="h-10 w-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-slate-900 truncate" id="view-resume">No resume uploaded</p>
+                <p class="text-xs text-slate-500">PDF Document</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50">
+              <div class="h-10 w-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-slate-900 truncate" id="view-transcript">No transcript uploaded</p>
+                <p class="text-xs text-slate-500">PDF Document</p>
+              </div>
+            </div>
+          </div>
         </div>
+
+        <!-- Scholarship Profile Form -->
+        <form id="scholarship-profile-form" onsubmit="saveProfile(event)" class="view-mode-active">
+          
+          <!-- Academic Background -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm card-hover transition-shadow mb-6">
+            <div class="px-6 pt-6 pb-4 border-b border-slate-100 flex items-center gap-3">
+              <div class="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center">
+                <svg class="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-slate-900">Academic Background</h3>
+                <p class="text-sm text-slate-500">Used to match you with relevant scholarships</p>
+              </div>
+            </div>
+            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="institution">Institution / University</label>
+                <div id="view-institution" class="data-text data-empty view-only">Not set</div>
+                <input id="institution" name="institution" type="text" placeholder="e.g. University of Toronto"
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="major">Field of Study / Major</label>
+                <div id="view-major" class="data-text data-empty view-only">Not set</div>
+                <input id="major" name="major" type="text" placeholder="e.g. Computer Science"
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="degree">Degree Level</label>
+                <div id="view-degree" class="data-text data-empty view-only">Not set</div>
+                <select id="degree" name="degree"
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  <option value="" disabled selected>Select degree level</option>
+                  <option>High School</option>
+                  <option>Associate's</option>
+                  <option>Bachelor's</option>
+                  <option>Master's</option>
+                  <option>PhD / Doctoral</option>
+                  <option>Professional (MD, JD, etc.)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="gpa">GPA</label>
+                <div id="view-gpa" class="data-text data-empty view-only">Not set</div>
+                <div class="relative edit-only">
+                  <input id="gpa" name="gpa" type="number" min="0" max="4" step="0.01" placeholder="e.g. 3.7"
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">/ 4.0</span>
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="grad-year">Expected Graduation Year</label>
+                <div id="view-grad-year" class="data-text data-empty view-only">Not set</div>
+                <input id="grad-year" name="grad_year" type="number" min="2025" max="2035" placeholder="e.g. 2027"
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="enrollment">Enrollment Status</label>
+                <div id="view-enrollment" class="data-text data-empty view-only">Not set</div>
+                <select id="enrollment" name="enrollment"
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  <option value="" disabled selected>Select status</option>
+                  <option>Full-time</option>
+                  <option>Part-time</option>
+                  <option>Not currently enrolled</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Financial Information -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm card-hover transition-shadow mb-6">
+            <div class="px-6 pt-6 pb-4 border-b border-slate-100 flex items-center gap-3">
+              <div class="h-9 w-9 rounded-xl bg-emerald-50 flex items-center justify-center">
+                <svg class="h-5 w-5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-slate-900">Financial Information</h3>
+                <p class="text-sm text-slate-500">Helps match need-based scholarships</p>
+              </div>
+            </div>
+            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="income-bracket">Household Income Bracket</label>
+                <div id="view-income-bracket" class="data-text data-empty view-only">Not set</div>
+                <select id="income-bracket" name="income_bracket"
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  <option value="" disabled selected>Select income range</option>
+                  <option>Under $30,000</option>
+                  <option>$30,000 – $60,000</option>
+                  <option>$60,000 – $100,000</option>
+                  <option>$100,000 – $150,000</option>
+                  <option>Over $150,000</option>
+                  <option>Prefer not to say</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="first-gen">First-Generation Student?</label>
+                <div id="view-first-gen" class="data-text data-empty view-only">Not set</div>
+                <select id="first-gen" name="first_gen"
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  <option value="" disabled selected>Select option</option>
+                  <option value="yes">Yes – first in family to attend college</option>
+                  <option value="no">No</option>
+                  <option value="prefer_not">Prefer not to say</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="fafsa">FAFSA / Financial Aid Filed?</label>
+                <div id="view-fafsa" class="data-text data-empty view-only">Not set</div>
+                <select id="fafsa" name="fafsa"
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  <option value="" disabled selected>Select option</option>
+                  <option>Yes</option>
+                  <option>No</option>
+                  <option>Not applicable</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="aid-amount">Annual Tuition / Aid Needed</label>
+                <div id="view-aid-amount" class="data-text data-empty view-only">Not set</div>
+                <div class="relative edit-only">
+                  <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                  <input id="aid-amount" name="aid_amount" type="number" min="0" placeholder="e.g. 15000"
+                    class="w-full pl-8 pr-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Personal Background -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm card-hover transition-shadow mb-6">
+            <div class="px-6 pt-6 pb-4 border-b border-slate-100 flex items-center gap-3">
+              <div class="h-9 w-9 rounded-xl bg-purple-50 flex items-center justify-center">
+                <svg class="h-5 w-5 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-slate-900">Personal Background</h3>
+                <p class="text-sm text-slate-500">Many scholarships target specific identities and experiences</p>
+              </div>
+            </div>
+            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="ethnicity">Ethnicity / Heritage</label>
+                <div id="view-ethnicity" class="data-text data-empty view-only">Not set</div>
+                <input id="ethnicity" name="ethnicity" type="text" placeholder="Optional – e.g. Hispanic, Asian-American"
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="gender">Gender Identity</label>
+                <div id="view-gender" class="data-text data-empty view-only">Not set</div>
+                <select id="gender" name="gender"
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  <option value="" disabled selected>Select option</option>
+                  <option>Woman</option>
+                  <option>Man</option>
+                  <option>Non-binary</option>
+                  <option>Prefer not to say</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="location">Location (from Onboarding)</label>
+                <div id="view-location" class="data-text data-empty view-only">Not set</div>
+                <input id="location" name="location" type="text" placeholder="e.g. Ontario, CA"
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="disability">Disability / Accessibility Needs</label>
+                <div id="view-disability" class="data-text data-empty view-only">Not set</div>
+                <select id="disability" name="disability"
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  <option value="" disabled selected>Select option</option>
+                  <option>Yes</option>
+                  <option>No</option>
+                  <option>Prefer not to say</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="veteran">Veteran / Military Affiliation</label>
+                <div id="view-veteran" class="data-text data-empty view-only">Not set</div>
+                <select id="veteran" name="veteran"
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  <option value="" disabled selected>Select option</option>
+                  <option>Veteran</option>
+                  <option>Active Duty</option>
+                  <option>Military Dependent</option>
+                  <option>None</option>
+                  <option>Prefer not to say</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Goals & Interests -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm card-hover transition-shadow mb-6">
+            <div class="px-6 pt-6 pb-4 border-b border-slate-100 flex items-center gap-3">
+              <div class="h-9 w-9 rounded-xl bg-amber-50 flex items-center justify-center">
+                <svg class="h-5 w-5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-slate-900">Goals & Interests</h3>
+                <p class="text-sm text-slate-500">Helps our AI find the best opportunities for you</p>
+              </div>
+            </div>
+            <div class="p-6 space-y-5">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="career-goals">Career Goals</label>
+                <div id="view-career-goals" class="data-text data-empty view-only whitespace-pre-wrap">Not set</div>
+                <textarea id="career-goals" name="career_goals" rows="3"
+                  placeholder="Describe your career aspirations and what you hope to accomplish after graduation..."
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 resize-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">Areas of Interest</label>
+                <div id="view-interests" class="flex flex-wrap gap-2 view-only">
+                  <span class="data-empty italic text-sm text-slate-400">Not set</span>
+                </div>
+                <!-- Interactive Tag Selector (Edit Mode Only) -->
+                <div class="flex flex-wrap gap-2 edit-only" id="interests-container">
+                  {% for tag in ['STEM', 'Arts & Humanities', 'Business', 'Public Service', 'Healthcare', 'Law', 'Education', 'Entrepreneurship', 'Research', 'Environment', 'Social Justice', 'Technology'] %}
+                  <button type="button" onclick="toggleTag(this)"
+                    class="interest-tag px-3 py-1.5 rounded-full text-sm font-medium border border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
+                    {{ tag }}
+                  </button>
+                  {% endfor %}
+                </div>
+                <input type="hidden" name="interests" id="interests-hidden">
+              </div>
+              <div class="pt-2">
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="experiences">Experiences & Extracurriculars</label>
+                <div id="view-experiences" class="data-text data-empty view-only whitespace-pre-wrap">Not set</div>
+                <textarea id="experiences" name="experiences" rows="4"
+                  placeholder="List clubs, volunteering, leadership roles, awards, publications (from onboarding)..."
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 resize-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Save Button (Edit Only) -->
+          <div class="flex items-center justify-between mt-8 mb-12 edit-only">
+            <p id="save-status" class="text-sm font-medium"></p>
+            <div class="flex gap-3">
+              <button type="button" onclick="toggleEditMode()" class="px-6 py-3 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+                Cancel
+              </button>
+              <button type="submit" id="save-btn"
+                class="save-btn flex items-center gap-2 px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 text-sm transition-transform active:scale-95">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save Profile
+              </button>
+            </div>
+          </div>
+        </form>
+
+      </div>
     </div>
-</div>
+  </main>
+
+  <script>
+    let isEditMode = false;
+    const form = document.getElementById('scholarship-profile-form');
+    
+    function toggleEditMode() {
+      isEditMode = !isEditMode;
+      
+      const btnText = document.getElementById('toggle-edit-text');
+      if (isEditMode) {
+        form.classList.remove('view-mode-active');
+        form.classList.add('edit-mode-active');
+        btnText.textContent = 'Cancel Editing';
+      } else {
+        form.classList.add('view-mode-active');
+        form.classList.remove('edit-mode-active');
+        btnText.textContent = 'Edit Profile';
+        // Reload saved profile data to discard unsaved changes
+        loadProfile();
+      }
+    }
+
+    function openSidebar() {
+      document.getElementById('sidebar').classList.remove('-translate-x-full');
+      document.getElementById('sidebar-overlay').classList.remove('opacity-0', 'pointer-events-none');
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.add('-translate-x-full');
+      document.getElementById('sidebar-overlay').classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    function toggleTag(el) {
+      el.classList.toggle('bg-indigo-600');
+      el.classList.toggle('text-white');
+      el.classList.toggle('border-indigo-600');
+      el.classList.toggle('text-slate-600');
+      el.classList.toggle('border-slate-200');
+      updateInterests();
+    }
+
+    function updateInterests() {
+      const active = [...document.querySelectorAll('.interest-tag')]
+        .filter(t => t.classList.contains('bg-indigo-600'))
+        .map(t => t.textContent.trim());
+      document.getElementById('interests-hidden').value = active.join(',');
+    }
+
+    async function saveProfile(e) {
+      e.preventDefault();
+      const btn = document.getElementById('save-btn');
+      const status = document.getElementById('save-status');
+      
+      btn.disabled = true;
+      btn.innerHTML = `
+        <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+        Saving...
+      `;
+
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const res = await fetch('/api/user/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+          status.textContent = '✅ Profile saved successfully!';
+          status.className = 'text-sm text-emerald-600 font-medium';
+        } else {
+          const err = await res.json();
+          status.textContent = `⚠️ ${err.error || 'Failed to save. Try again.'}`;
+          status.className = 'text-sm text-red-500 font-medium';
+        }
+      } catch {
+        status.textContent = '⚠️ Network error – profile not saved.';
+        status.className = 'text-sm text-red-500 font-medium';
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = `
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Profile
+      `;
+      setTimeout(() => { 
+        status.textContent = ''; 
+        if (res.ok) {
+          toggleEditMode(); // Return to view mode on success
+        }
+      }, 2000);
+    }
+
+    // Load saved profile on page load
+    async function loadProfile() {
+      try {
+        const res = await fetch('/api/user/profile');
+        if (!res.ok) return;
+        const { profile } = await res.json();
+        if (!profile) return;
+        
+        // Populate the uploaded files display from onboarding
+        if (profile.resume_uploaded) {
+          const resEl = document.getElementById('view-resume');
+          resEl.textContent = profile.resume_filename;
+          resEl.classList.add('text-indigo-700');
+        }
+        if (profile.transcript_uploaded) {
+          const transEl = document.getElementById('view-transcript');
+          transEl.textContent = profile.transcript_filename;
+          transEl.classList.add('text-emerald-700');
+        }
+
+        const fields = ['institution','major','degree','gpa','grad_year','enrollment',
+          'income_bracket','first_gen','fafsa','aid_amount','ethnicity','gender',
+          'location','disability','veteran','career_goals','experiences'];
+        
+        fields.forEach(f => {
+          // Input field editing
+          const el = document.getElementById(f.replace(/_/g, '-')) || document.querySelector(`[name="${f}"]`);
+          if (el && profile[f]) el.value = profile[f];
+          
+          // Static text display
+          const viewEl = document.getElementById(`view-${f.replace(/_/g, '-')}`);
+          if (viewEl && profile[f]) {
+            let displayValue = profile[f];
+            if (f === 'aid_amount' && displayValue) displayValue = `$${displayValue}`;
+            viewEl.textContent = displayValue;
+            viewEl.classList.remove('data-empty');
+            viewEl.classList.add('text-indigo-950');
+          }
+        });
+
+        if (profile.interests) {
+          const interests = profile.interests.split(',').map(s => s.trim());
+          
+          // Sync Edit Tags
+          document.querySelectorAll('.interest-tag').forEach(t => {
+            if (interests.includes(t.textContent.trim())) {
+              t.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
+              t.classList.remove('text-slate-600', 'border-slate-200');
+            } else {
+              t.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
+              t.classList.add('text-slate-600', 'border-slate-200');
+            }
+          });
+          
+          // Sync View Tags
+          const viewT = document.getElementById('view-interests');
+          if (interests.length > 0 && interests[0] !== "") {
+            viewT.innerHTML = interests.map(tag => 
+              `<span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full text-xs font-semibold">${tag}</span>`
+            ).join('');
+          }
+        }
+      } catch {}
+    }
+
+    loadProfile();
+  </script>
 </body>
 </html>
