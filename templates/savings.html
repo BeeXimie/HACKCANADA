@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Savings Insights</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>Your Savings Insights</h1>
+        
+        <div class="savings-summary" style="text-align: center; margin: 2rem 0;">
+            <h3>You could save up to</h3>
+            <h2 style="font-size: 3rem; color: #2ecc71;">$1,200</h2>
+            <p>per semester by optimizing your expenses.</p>
+        </div>
+        
+        <div class="insights-list">
+            <ul>
+                <li><strong>Housing:</strong> Consider sharing an apartment to save $400/mo.</li>
+                <li><strong>Food:</strong> Meal prepping could reduce your grocery bill by $150/mo.</li>
+                <li><strong>Textbooks:</strong> Using library reserves or digital rentals could save $300/semester.</li>
+            </ul>
+        </div>
+        
+        <div class="actions" style="margin-top: 2rem;">
+            <a href="/scholarships" class="button">Find Scholarships</a>
+            <a href="/" class="button" style="background-color: var(--secondary-color);">Back to Home</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

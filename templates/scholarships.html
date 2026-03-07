@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find Scholarships</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>Scholarship Matches</h1>
+        <p>Based on your profile, here are some scholarships you might be eligible for:</p>
+        
+        <div class="scholarship-list" style="margin-top: 1.5rem; text-align: left;">
+            <div class="scholarship-card" style="padding: 1rem; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem;">
+                <h3>Merit Excellence Grant</h3>
+                <p><strong>Amount:</strong> $5,000</p>
+                <p><strong>Deadline:</strong> October 15</p>
+                <a href="#" class="button" style="padding: 0.5rem 1rem; display: inline-block; margin-top: 0.5rem;">Apply Now</a>
+            </div>
+            
+            <div class="scholarship-card" style="padding: 1rem; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem;">
+                <h3>Community Tech Scholarship</h3>
+                <p><strong>Amount:</strong> $2,500</p>
+                <p><strong>Deadline:</strong> November 1</p>
+                <a href="#" class="button" style="padding: 0.5rem 1rem; display: inline-block; margin-top: 0.5rem;">Apply Now</a>
+            </div>
+        </div>
+        
+        <div class="actions" style="margin-top: 2rem;">
+            <a href="/recommendations" class="button">View AI Recommendations</a>
+            <a href="/" class="button" style="background-color: var(--secondary-color);">Back to Home</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
