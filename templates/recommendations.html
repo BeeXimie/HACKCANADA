@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Recommendations</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>AI Recommendations</h1>
+        <p>Powered by Gemini AI</p>
+        
+        <div class="ai-box" style="background-color: #f8f9fa; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #4a90e2; margin: 1.5rem 0; text-align: left;">
+            <p><em>"Based on your profile context, I recommend applying for the <strong>STEM Diversity Grant</strong>. Since your rent is above average for your zip code, finding a roommate for next semester could also improve your financial buffer."</em></p>
+        </div>
+        
+        <button class="button" id="refresh-ai">Generate New Insights</button>
+        
+        <div class="actions" style="margin-top: 2rem;">
+            <a href="/profile" class="button">Go to Profile</a>
+            <a href="/" class="button" style="background-color: var(--secondary-color);">Back to Home</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
