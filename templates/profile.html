@@ -22,18 +22,31 @@
     .nav-active svg { color: #4f46e5; }
     input:focus, select:focus, textarea:focus {
       outline: none;
-      ring: 2px solid #6366f1;
+      box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
       border-color: #6366f1;
-      box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
     }
-    .save-btn {
-      transition: all 0.2s;
-    }
-    .save-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(79,70,229,0.4);
-    }
+    .save-btn { transition: all 0.2s; }
+    .save-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(79,70,229,0.4); }
     .card-hover:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    
+    /* Edit Mode Toggles */
+    .view-mode-active .edit-only { display: none !important; }
+    .edit-mode-active .view-only { display: none !important; }
+    
+    /* Read-only Data Styles */
+    .data-text {
+      font-size: 0.95rem;
+      color: #1e293b;
+      font-weight: 500;
+      padding: 0.5rem 0;
+      min-height: 2.5rem;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+    .data-empty {
+      color: #94a3b8;
+      font-style: italic;
+      font-weight: 400;
+    }
   </style>
 </head>
 <body class="min-h-screen bg-slate-50 flex font-sans">
@@ -121,6 +134,10 @@
         </div>
       </div>
       <div class="flex items-center gap-3">
+        <button id="toggle-edit-btn" onclick="toggleEditMode()" class="flex items-center gap-2 px-4 py-2 text-sm text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors font-semibold shadow-sm border border-indigo-100">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          <span id="toggle-edit-text">Edit Profile</span>
+        </button>
         <a href="/logout" class="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium">
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Log Out
@@ -183,18 +200,50 @@
                 <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Auth ID</label>
                 <p class="text-xs text-slate-400 font-mono truncate">{{ user.sub if user else '—' }}</p>
               </div>
-              {% if user and user.nickname %}
-              <div>
-                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Nickname</label>
-                <p class="text-slate-900 font-medium">{{ user.nickname }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Uploaded Files Section -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm card-hover transition-shadow mb-6">
+          <div class="px-6 pt-6 pb-4 border-b border-slate-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="h-9 w-9 rounded-xl bg-slate-100 flex items-center justify-center">
+                <svg class="h-5 w-5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
               </div>
-              {% endif %}
+              <div>
+                <h3 class="font-bold text-slate-900">Uploaded Documents</h3>
+                <p class="text-sm text-slate-500">Files provided during onboarding</p>
+              </div>
+            </div>
+            <!-- Future link to trigger file upload modal -->
+            <button class="text-sm font-medium text-indigo-600 hover:text-indigo-800 edit-only">Manage Files</button>
+          </div>
+          <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50">
+              <div class="h-10 w-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-slate-900 truncate" id="view-resume">No resume uploaded</p>
+                <p class="text-xs text-slate-500">PDF Document</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50">
+              <div class="h-10 w-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-slate-900 truncate" id="view-transcript">No transcript uploaded</p>
+                <p class="text-xs text-slate-500">PDF Document</p>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Scholarship Profile Form -->
-        <form id="scholarship-profile-form" onsubmit="saveProfile(event)">
+        <form id="scholarship-profile-form" onsubmit="saveProfile(event)" class="view-mode-active">
+          
           <!-- Academic Background -->
           <div class="bg-white rounded-2xl border border-slate-200 shadow-sm card-hover transition-shadow mb-6">
             <div class="px-6 pt-6 pb-4 border-b border-slate-100 flex items-center gap-3">
@@ -206,21 +255,24 @@
                 <p class="text-sm text-slate-500">Used to match you with relevant scholarships</p>
               </div>
             </div>
-            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="institution">Institution / University</label>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="institution">Institution / University</label>
+                <div id="view-institution" class="data-text data-empty view-only">Not set</div>
                 <input id="institution" name="institution" type="text" placeholder="e.g. University of Toronto"
-                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
               </div>
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="major">Field of Study / Major</label>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="major">Field of Study / Major</label>
+                <div id="view-major" class="data-text data-empty view-only">Not set</div>
                 <input id="major" name="major" type="text" placeholder="e.g. Computer Science"
-                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
               </div>
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="degree">Degree Level</label>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="degree">Degree Level</label>
+                <div id="view-degree" class="data-text data-empty view-only">Not set</div>
                 <select id="degree" name="degree"
-                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
                   <option value="" disabled selected>Select degree level</option>
                   <option>High School</option>
                   <option>Associate's</option>
@@ -231,22 +283,25 @@
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="gpa">GPA</label>
-                <div class="relative">
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="gpa">GPA</label>
+                <div id="view-gpa" class="data-text data-empty view-only">Not set</div>
+                <div class="relative edit-only">
                   <input id="gpa" name="gpa" type="number" min="0" max="4" step="0.01" placeholder="e.g. 3.7"
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
                   <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">/ 4.0</span>
                 </div>
               </div>
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="grad-year">Expected Graduation Year</label>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="grad-year">Expected Graduation Year</label>
+                <div id="view-grad-year" class="data-text data-empty view-only">Not set</div>
                 <input id="grad-year" name="grad_year" type="number" min="2025" max="2035" placeholder="e.g. 2027"
-                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
               </div>
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="enrollment">Enrollment Status</label>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="enrollment">Enrollment Status</label>
+                <div id="view-enrollment" class="data-text data-empty view-only">Not set</div>
                 <select id="enrollment" name="enrollment"
-                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
                   <option value="" disabled selected>Select status</option>
                   <option>Full-time</option>
                   <option>Part-time</option>
@@ -267,11 +322,12 @@
                 <p class="text-sm text-slate-500">Helps match need-based scholarships</p>
               </div>
             </div>
-            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="income-bracket">Household Income Bracket</label>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="income-bracket">Household Income Bracket</label>
+                <div id="view-income-bracket" class="data-text data-empty view-only">Not set</div>
                 <select id="income-bracket" name="income_bracket"
-                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
                   <option value="" disabled selected>Select income range</option>
                   <option>Under $30,000</option>
                   <option>$30,000 – $60,000</option>
@@ -282,9 +338,10 @@
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="first-gen">First-Generation Student?</label>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="first-gen">First-Generation Student?</label>
+                <div id="view-first-gen" class="data-text data-empty view-only">Not set</div>
                 <select id="first-gen" name="first_gen"
-                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
                   <option value="" disabled selected>Select option</option>
                   <option value="yes">Yes – first in family to attend college</option>
                   <option value="no">No</option>
@@ -292,9 +349,10 @@
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="fafsa">FAFSA / Financial Aid Filed?</label>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="fafsa">FAFSA / Financial Aid Filed?</label>
+                <div id="view-fafsa" class="data-text data-empty view-only">Not set</div>
                 <select id="fafsa" name="fafsa"
-                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
                   <option value="" disabled selected>Select option</option>
                   <option>Yes</option>
                   <option>No</option>
@@ -302,8 +360,9 @@
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="aid-amount">Annual Tuition / Aid Needed</label>
-                <div class="relative">
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="aid-amount">Annual Tuition / Aid Needed</label>
+                <div id="view-aid-amount" class="data-text data-empty view-only">Not set</div>
+                <div class="relative edit-only">
                   <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
                   <input id="aid-amount" name="aid_amount" type="number" min="0" placeholder="e.g. 15000"
                     class="w-full pl-8 pr-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
@@ -323,16 +382,18 @@
                 <p class="text-sm text-slate-500">Many scholarships target specific identities and experiences</p>
               </div>
             </div>
-            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="ethnicity">Ethnicity / Heritage</label>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="ethnicity">Ethnicity / Heritage</label>
+                <div id="view-ethnicity" class="data-text data-empty view-only">Not set</div>
                 <input id="ethnicity" name="ethnicity" type="text" placeholder="Optional – e.g. Hispanic, Asian-American"
-                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
               </div>
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="gender">Gender Identity</label>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="gender">Gender Identity</label>
+                <div id="view-gender" class="data-text data-empty view-only">Not set</div>
                 <select id="gender" name="gender"
-                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
                   <option value="" disabled selected>Select option</option>
                   <option>Woman</option>
                   <option>Man</option>
@@ -341,14 +402,16 @@
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="location">State / Province</label>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="location">Location (from Onboarding)</label>
+                <div id="view-location" class="data-text data-empty view-only">Not set</div>
                 <input id="location" name="location" type="text" placeholder="e.g. Ontario, CA"
-                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
               </div>
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="disability">Disability / Accessibility Needs</label>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="disability">Disability / Accessibility Needs</label>
+                <div id="view-disability" class="data-text data-empty view-only">Not set</div>
                 <select id="disability" name="disability"
-                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
                   <option value="" disabled selected>Select option</option>
                   <option>Yes</option>
                   <option>No</option>
@@ -356,9 +419,10 @@
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="veteran">Veteran / Military Affiliation</label>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="veteran">Veteran / Military Affiliation</label>
+                <div id="view-veteran" class="data-text data-empty view-only">Not set</div>
                 <select id="veteran" name="veteran"
-                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
                   <option value="" disabled selected>Select option</option>
                   <option>Veteran</option>
                   <option>Active Duty</option>
@@ -383,40 +447,51 @@
             </div>
             <div class="p-6 space-y-5">
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="career-goals">Career Goals</label>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="career-goals">Career Goals</label>
+                <div id="view-career-goals" class="data-text data-empty view-only whitespace-pre-wrap">Not set</div>
                 <textarea id="career-goals" name="career_goals" rows="3"
                   placeholder="Describe your career aspirations and what you hope to accomplish after graduation..."
-                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 resize-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"></textarea>
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 resize-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"></textarea>
               </div>
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Areas of Interest</label>
-                <div class="flex flex-wrap gap-2" id="interests-container">
+                <label class="block text-sm font-bold text-slate-700 mb-2">Areas of Interest</label>
+                <div id="view-interests" class="flex flex-wrap gap-2 view-only">
+                  <span class="data-empty italic text-sm text-slate-400">Not set</span>
+                </div>
+                <!-- Interactive Tag Selector (Edit Mode Only) -->
+                <div class="flex flex-wrap gap-2 edit-only" id="interests-container">
                   {% for tag in ['STEM', 'Arts & Humanities', 'Business', 'Public Service', 'Healthcare', 'Law', 'Education', 'Entrepreneurship', 'Research', 'Environment', 'Social Justice', 'Technology'] %}
                   <button type="button" onclick="toggleTag(this)"
-                    class="interest-tag px-3 py-1.5 rounded-full text-sm border border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
+                    class="interest-tag px-3 py-1.5 rounded-full text-sm font-medium border border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
                     {{ tag }}
                   </button>
                   {% endfor %}
                 </div>
                 <input type="hidden" name="interests" id="interests-hidden">
               </div>
-              <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="extracurriculars">Extracurriculars & Achievements</label>
-                <textarea id="extracurriculars" name="extracurriculars" rows="3"
-                  placeholder="List clubs, volunteering, leadership roles, awards, publications..."
-                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 resize-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"></textarea>
+              <div class="pt-2">
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="experiences">Experiences & Extracurriculars</label>
+                <div id="view-experiences" class="data-text data-empty view-only whitespace-pre-wrap">Not set</div>
+                <textarea id="experiences" name="experiences" rows="4"
+                  placeholder="List clubs, volunteering, leadership roles, awards, publications (from onboarding)..."
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 resize-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"></textarea>
               </div>
             </div>
           </div>
 
-          <!-- Save Button -->
-          <div class="flex items-center justify-between">
-            <p id="save-status" class="text-sm text-slate-500"></p>
-            <button type="submit" id="save-btn"
-              class="save-btn flex items-center gap-2 px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md text-sm transition-all">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-              Save Profile
-            </button>
+          <!-- Save Button (Edit Only) -->
+          <div class="flex items-center justify-between mt-8 mb-12 edit-only">
+            <p id="save-status" class="text-sm font-medium"></p>
+            <div class="flex gap-3">
+              <button type="button" onclick="toggleEditMode()" class="px-6 py-3 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+                Cancel
+              </button>
+              <button type="submit" id="save-btn"
+                class="save-btn flex items-center gap-2 px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 text-sm transition-transform active:scale-95">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save Profile
+              </button>
+            </div>
           </div>
         </form>
 
@@ -425,6 +500,26 @@
   </main>
 
   <script>
+    let isEditMode = false;
+    const form = document.getElementById('scholarship-profile-form');
+    
+    function toggleEditMode() {
+      isEditMode = !isEditMode;
+      
+      const btnText = document.getElementById('toggle-edit-text');
+      if (isEditMode) {
+        form.classList.remove('view-mode-active');
+        form.classList.add('edit-mode-active');
+        btnText.textContent = 'Cancel Editing';
+      } else {
+        form.classList.add('view-mode-active');
+        form.classList.remove('edit-mode-active');
+        btnText.textContent = 'Edit Profile';
+        // Reload saved profile data to discard unsaved changes
+        loadProfile();
+      }
+    }
+
     function openSidebar() {
       document.getElementById('sidebar').classList.remove('-translate-x-full');
       document.getElementById('sidebar-overlay').classList.remove('opacity-0', 'pointer-events-none');
@@ -489,7 +584,12 @@
         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Save Profile
       `;
-      setTimeout(() => { status.textContent = ''; }, 4000);
+      setTimeout(() => { 
+        status.textContent = ''; 
+        if (res.ok) {
+          toggleEditMode(); // Return to view mode on success
+        }
+      }, 2000);
     }
 
     // Load saved profile on page load
@@ -499,24 +599,60 @@
         if (!res.ok) return;
         const { profile } = await res.json();
         if (!profile) return;
+        
+        // Populate the uploaded files display from onboarding
+        if (profile.resume_uploaded) {
+          const resEl = document.getElementById('view-resume');
+          resEl.textContent = profile.resume_filename;
+          resEl.classList.add('text-indigo-700');
+        }
+        if (profile.transcript_uploaded) {
+          const transEl = document.getElementById('view-transcript');
+          transEl.textContent = profile.transcript_filename;
+          transEl.classList.add('text-emerald-700');
+        }
 
         const fields = ['institution','major','degree','gpa','grad_year','enrollment',
           'income_bracket','first_gen','fafsa','aid_amount','ethnicity','gender',
-          'location','disability','veteran','career_goals','extracurriculars'];
+          'location','disability','veteran','career_goals','experiences'];
         
         fields.forEach(f => {
+          // Input field editing
           const el = document.getElementById(f.replace(/_/g, '-')) || document.querySelector(`[name="${f}"]`);
           if (el && profile[f]) el.value = profile[f];
+          
+          // Static text display
+          const viewEl = document.getElementById(`view-${f.replace(/_/g, '-')}`);
+          if (viewEl && profile[f]) {
+            let displayValue = profile[f];
+            if (f === 'aid_amount' && displayValue) displayValue = `$${displayValue}`;
+            viewEl.textContent = displayValue;
+            viewEl.classList.remove('data-empty');
+            viewEl.classList.add('text-indigo-950');
+          }
         });
 
         if (profile.interests) {
           const interests = profile.interests.split(',').map(s => s.trim());
+          
+          // Sync Edit Tags
           document.querySelectorAll('.interest-tag').forEach(t => {
             if (interests.includes(t.textContent.trim())) {
               t.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
               t.classList.remove('text-slate-600', 'border-slate-200');
+            } else {
+              t.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
+              t.classList.add('text-slate-600', 'border-slate-200');
             }
           });
+          
+          // Sync View Tags
+          const viewT = document.getElementById('view-interests');
+          if (interests.length > 0 && interests[0] !== "") {
+            viewT.innerHTML = interests.map(tag => 
+              `<span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full text-xs font-semibold">${tag}</span>`
+            ).join('');
+          }
         }
       } catch {}
     }

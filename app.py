@@ -15,9 +15,9 @@ print(f"API Key loaded: {os.getenv('GEMINI_API_KEY')[:5]}...") # Just to verify 
 
 client = genai.Client()
 
-class ScholarshipAnalysis(Basemodel):
+class ScholarshipAnalysis(BaseModel):
     match_score: int = Field(description="Score from 0 to 100 on how well the user matches the scholarship")
-    key_strengths: list[str] = Field(description="3 bullet opints highlighting why they're a good fit")
+    key_strengths: list[str] = Field(description="3 bullet points highlighting why they're a good fit")
     essay_outline: list[str] = Field(description="A brief 3-point outline for their application essay")
 
 def analyze_scholarship_match(user_profile: dict, scholarship_details: str):

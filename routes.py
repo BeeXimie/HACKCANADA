@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, g, jso
 from auth import auth0
 import os
 import json
+import sqlite3
 
 main_bp = Blueprint('main', __name__)
 
@@ -96,10 +97,20 @@ async def expenses():
         return redirect(url_for('main.login'))
         
     if request.method == 'POST':
-        # Form handling logic goes here
-        pass
+        # Grab all the answers from the form inputs
+        q1 = request.form.get('vault_q1', '')
+        q2 = request.form.get('vault_q2', '')
+        q3 = request.form.get('vault_q3', '')
+        q4 = request.form.get('vault_q4', '')
         
-    return render_template('expenses.html', user=user)
+        # Save to session (future: save to DB `essay_vault` table)
+        session['essay_vault'] = {
+            'q1': q1, 'q2': q2, 'q3': q3, 'q4': q4
+        }
+        return redirect(url_for('main.expenses'))
+        
+    vault_data = session.get('essay_vault', {})
+    return render_template('expenses.html', user=user, vault=vault_data)
 
 @main_bp.route('/savings')
 async def savings():
@@ -108,7 +119,26 @@ async def savings():
     if not user:
         return redirect(url_for('main.login'))
         
-    return render_template('savings.html', user=user)
+    # Provide mock data for the Kanban board until SQL is fully configured
+    mock_applications = {
+        'Saved': [
+            {'title': 'National Merit Scholarship', 'amount': '$2,500', 'deadline': 'Oct 15', 'company': 'NMSC'},
+            {'title': 'Coca-Cola Scholars', 'amount': '$20k', 'deadline': 'Oct 31', 'company': 'Coca-Cola'}
+        ],
+        'Applying': [
+            {'title': 'Google Lime Scholarship', 'amount': '$10k', 'deadline': 'Dec 1', 'company': 'Google'}
+        ],
+        'Applied': [
+            {'title': 'Gates Scholarship', 'amount': 'Full Ride', 'deadline': 'Sep 15', 'company': 'Gates Foundation'}
+        ],
+        'Interview': [],
+        'Won': [
+            {'title': 'Local Rotary Club', 'amount': '$1,000', 'deadline': 'Past', 'company': 'Rotary'}
+        ],
+        'Rejected': []
+    }
+        
+    return render_template('savings.html', user=user, mock_applications=mock_applications)
 
 @main_bp.route('/scholarships')
 async def scholarships():
@@ -117,7 +147,35 @@ async def scholarships():
     if not user:
         return redirect(url_for('main.login'))
         
-    return render_template('scholarships.html', user=user)
+    scholarships_data = []
+    
+    # ---------------------------------------------------------
+    # TODO: UNCOMMENT ONCE TEAMMATE FINISHES SQLITE SCRAPER DB
+    # ---------------------------------------------------------
+    # try:
+    #     # Connect to the SQLite DB your teammate is building
+    #     conn = sqlite3.connect('scholarships.db')
+    #     conn.row_factory = sqlite3.Row
+    #     cursor = conn.cursor()
+    #     
+    #     # Query scholarships, left joining our custom Gemini match score!
+    #     query = """
+    #         SELECT s.*, m.match_score 
+    #         FROM scholarships s
+    #         LEFT JOIN user_scholarship_matches m 
+    #           ON s.id = m.scholarship_id AND m.user_id = ?
+    #         ORDER BY m.match_score DESC NULLS LAST
+    #     """
+    #     cursor.execute(query, (user['sub'],))
+    #     rows = cursor.fetchall()
+    #     
+    #     # Convert to standard dict for Jinja template
+    #     scholarships_data = [dict(row) for row in rows]
+    #     conn.close()
+    # except Exception as e:
+    #     print(f"Database error: {e}")
+    
+    return render_template('scholarships.html', user=user, scholarships=scholarships_data)
 
 @main_bp.route('/recommendations')
 async def recommendations():
@@ -139,10 +197,10 @@ async def gemini_analyze_api():
     data = request.json
     scholarship_text = data.get("scholarship_details", "")
 
-    profile = session.get('scholarship_porfile', {})
+    profile = session.get('scholarship_profile', {})
 
     try:
-        json_result_string = analyze_scholarship_match(profile, scholarhsip_text)
+        json_result_string = analyze_scholarship_match(profile, scholarship_text)
 
         analysis_dict = json.loads(json_result_string)
 
