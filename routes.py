@@ -309,7 +309,14 @@ async def onboarding_confirm():
         if not db_user:
             db_user = User(auth0_sub=user['sub'])
             db.session.add(db_user)
+            
         db_user.from_dict(profile)
+        
+        # Ensure db_user.id is populated then reset AI scores on profile update
+        db.session.flush()
+        from models import UserScholarshipScore
+        UserScholarshipScore.query.filter_by(user_id=db_user.id).delete()
+        
         db.session.commit()
         session['scholarship_profile'] = profile
         session['onboarding_complete'] = True
@@ -365,14 +372,20 @@ def scholarships():
 
     # Join scholarships with scores if they exist
     from sqlalchemy import text
+    institution = db_user.institution if db_user else ""
     query = text("""
         SELECT s.*, us.score as match_score, us.reasoning as match_reasoning
         FROM ouinfo_scholarships s
         LEFT JOIN user_scholarship_scores us ON s.id = us.scholarship_id AND us.user_id = :user_id
+        WHERE :institution = '' 
+           OR s.university = 'External/Various' 
+           OR s.university = 'Unknown'
+           OR :institution LIKE '%' || s.university || '%'
+           OR s.university LIKE '%' || :institution || '%'
         ORDER BY CASE WHEN us.score IS NULL THEN 0 ELSE 1 END DESC, us.score DESC, s.title ASC
     """)
     
-    result = db.session.execute(query, {"user_id": user_id})
+    result = db.session.execute(query, {"user_id": user_id, "institution": institution})
     scholarships_data = [dict(row._mapping) for row in result]
     
     return render_template('scholarships.html', user=user, scholarships=scholarships_data)
@@ -383,6 +396,7 @@ def api_score_scholarships():
     """Batch score a set of scholarships for the current user."""
     from app import batch_analyze_scholarships
     from models import UserScholarshipScore
+    from sqlalchemy import text
     
     user = session.get("user")
     if not user:
@@ -397,14 +411,22 @@ def api_score_scholarships():
     scholarship_ids = data.get('ids', [])
     
     if not scholarship_ids:
-        # If no IDs provided, find the top 10 un-scored scholarships
+        # If no IDs provided, find the top 10 un-scored scholarships that match user's university
+        institution = db_user.institution or ""
         query = text("""
             SELECT id, title, description, eligibility 
             FROM ouinfo_scholarships 
             WHERE id NOT IN (SELECT scholarship_id FROM user_scholarship_scores WHERE user_id = :user_id)
+              AND (
+                  :institution = '' 
+                  OR university = 'External/Various' 
+                  OR university = 'Unknown'
+                  OR :institution LIKE '%' || university || '%'
+                  OR university LIKE '%' || :institution || '%'
+              )
             LIMIT 10
         """)
-        scholarships_to_score = [dict(row._mapping) for row in db.session.execute(query, {"user_id": db_user.id})]
+        scholarships_to_score = [dict(row._mapping) for row in db.session.execute(query, {"user_id": db_user.id, "institution": institution})]
     else:
         # Find specific scholarships
         query = text("SELECT id, title, description, eligibility FROM ouinfo_scholarships WHERE id IN :ids")
@@ -598,6 +620,11 @@ async def save_user_profile():
             db_user.transcript_uploaded = True
             db_user.transcript_filename = transcript.filename
             # Future: save to Cloudinary/Disk
+
+    # Delete existing scores to force a re-evaluation on next "Match"
+    from models import UserScholarshipScore
+    db.session.flush() # Ensure db_user.id exists
+    UserScholarshipScore.query.filter_by(user_id=db_user.id).delete()
 
     db.session.commit()
     profile = db_user.to_dict()
