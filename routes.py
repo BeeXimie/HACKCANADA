@@ -42,14 +42,104 @@ def profile():
     user = session.get("user")
     if not user:
         return redirect(url_for('main.login'))
-    return render_template('profile.html', user=user)
+    
+    db_user = User.query.filter_by(auth0_sub=user['sub']).first()
+    if not db_user:
+        # Create user if doesn't exist (though onboarding should have created it)
+        db_user = User(auth0_sub=user['sub'])
+        db.session.add(db_user)
+        db.session.commit()
+        
+    return render_template('profile.html', user=user, db_user=db_user)
 
 @main_bp.route('/logout')
 def logout():
     """Logout and redirect to Auth0 logout"""
     session.clear()
     logout_url = run_async(auth0.logout(g.store_options))
+    # Return JSON for React if requested
+    if request.headers.get('Accept') == 'application/json' or request.args.get('json'):
+        return jsonify({"logout_url": logout_url})
     return redirect(logout_url)
+
+@main_bp.route('/api/user/profile', methods=['GET', 'POST', 'PUT'])
+async def api_user_profile():
+    """Returns or updates the current user profile as JSON"""
+    user = session.get("user")
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    db_user = User.query.filter_by(auth0_sub=user['sub']).first()
+    if not db_user:
+        db_user = User(auth0_sub=user['sub'])
+        db.session.add(db_user)
+        db.session.commit()
+
+    if request.method in ['POST', 'PUT']:
+        # Support both JSON and Form data
+        if request.is_json:
+            data = request.get_json()
+        else:
+            # Convert ImmutableMultiDict to a plain dict
+            data = request.form.to_dict()
+            
+            # Special handling for arrays like interests or experiences if sent via form
+            if 'interests' in request.form:
+                data['interests'] = request.form.getlist('interests')
+        
+        # Experiences handling if sent as individual arrays (profile.html style)
+        if 'exp_company[]' in request.form:
+            companies = request.form.getlist('exp_company[]')
+            roles = request.form.getlist('exp_role[]')
+            starts = request.form.getlist('exp_start[]')
+            ends = request.form.getlist('exp_end[]')
+            currents = request.form.getlist('exp_current[]')
+            vols = request.form.getlist('exp_volunteer[]')
+            hours = request.form.getlist('exp_hours[]')
+            descs = request.form.getlist('exp_desc[]')
+            
+            experiences = []
+            for i in range(len(companies)):
+                exp = {
+                    'company': companies[i],
+                    'role': roles[i] if i < len(roles) else "",
+                    'start_date': starts[i] if i < len(starts) else "",
+                    'end_date': ends[i] if i < len(ends) else "",
+                    'current': currents[i] == 'true' if i < len(currents) else False,
+                    'volunteer': vols[i] == 'true' if i < len(vols) else False,
+                    'hours': hours[i] if i < len(hours) and hours[i] else None,
+                    'description': descs[i] if i < len(descs) else ""
+                }
+                experiences.append(exp)
+            data['experiences'] = experiences
+
+        db_user.from_dict(data)
+        
+        # Handle file deletions
+        if data.get('delete_resume') == 'true':
+            db_user.resume_uploaded = False
+            db_user.resume_filename = None
+        if data.get('delete_transcript') == 'true':
+            db_user.transcript_uploaded = False
+            db_user.transcript_filename = None
+
+        # Handle file upload flags if files are in request
+        if request.files:
+            if 'resume' in request.files:
+                res = request.files['resume']
+                if res and res.filename != '':
+                    db_user.resume_uploaded = True
+                    db_user.resume_filename = res.filename
+            if 'transcript' in request.files:
+                trans = request.files['transcript']
+                if trans and trans.filename != '':
+                    db_user.transcript_uploaded = True
+                    db_user.transcript_filename = trans.filename
+
+        db.session.commit()
+        return jsonify({"status": "ok", "profile": db_user.to_dict()})
+        
+    return jsonify({"user": user, "profile": db_user.to_dict()})
 
 from pypdf import PdfReader
 import io
@@ -90,6 +180,7 @@ async def onboarding():
             'enrollment': request.form.get('enrollment', ''),
             'disability': request.form.get('disability', ''),
             'veteran': request.form.get('veteran', ''),
+            'citizenship': request.form.get('citizenship', ''),
             "institution": "", 
             "major": "", 
             "degree": "Undergraduate",
@@ -133,66 +224,88 @@ async def onboarding():
             db_user = User(auth0_sub=user['sub'])
             db.session.add(db_user)
             
-        # Handle Step 2 fields if present
-        if 'institution' in request.form:
-            profile['institution'] = request.form.get('institution')
-            profile['major'] = request.form.get('major')
-            profile['degree'] = request.form.get('degree')
-            profile['gpa'] = request.form.get('gpa_confirm')
-            
-            grad_year_str = request.form.get('grad_year')
-            profile['grad_year'] = int(grad_year_str) if grad_year_str else 2025
-            
-            profile['interests'] = request.form.getlist('interests')
-            
-            aid_amount_str = request.form.get('aid_amount')
-            profile['aid_amount'] = float(aid_amount_str) if aid_amount_str else 0.0
-            
-            # Consolidate dynamic experiences
-            companies = request.form.getlist('exp_company[]')
-            roles = request.form.getlist('exp_role[]')
-            starts = request.form.getlist('exp_start[]')
-            ends = request.form.getlist('exp_end[]')
-            currents = request.form.getlist('exp_current[]')
-            vols = request.form.getlist('exp_volunteer[]')
-            hours = request.form.getlist('exp_hours[]')
-            descs = request.form.getlist('exp_desc[]')
-            
-            experiences = []
-            for i in range(len(companies)):
-                exp = {
-                    'company': companies[i],
-                    'role': roles[i] if i < len(roles) else "",
-                    'start_date': starts[i] if i < len(starts) else "",
-                    'end_date': ends[i] if i < len(ends) else "",
-                    'current': currents[i] == 'true' if i < len(currents) else False,
-                    'volunteer': vols[i] == 'true' if i < len(vols) else False,
-                    'hours': hours[i] if i < len(hours) and hours[i] else None,
-                    'description': descs[i] if i < len(descs) else ""
-                }
-                experiences.append(exp)
-            profile['experiences'] = experiences
-            
-            # Save to DB and mark complete
-            db_user.from_dict(profile)
-            db.session.commit()
-            session['scholarship_profile'] = profile
-            session['onboarding_complete'] = True
-            return redirect(url_for('main.profile'))
-
+        session['scholarship_profile'] = profile
+        print(f"DEBUG: Saved profile to session. Keys: {list(profile.keys())}")
+        if profile.get('experiences'):
+            print(f"DEBUG: Found {len(profile['experiences'])} experiences in profile.")
+        
         # Sync Step 1 data to DB
         db_user.from_dict(profile)
         db.session.commit()
         
-        session['scholarship_profile'] = profile
-        
-        # If AJAX request, return JSON for the frontend to handle navigation
-        if request.headers.get('Accept') == 'application/json':
-            return jsonify({"status": "ok", "profile": profile})
-            
-        return redirect(url_for('main.profile'))
+        # Redirect to Step 2 confirm page
+        return redirect(url_for('main.onboarding_confirm'))
         
     return render_template('onboarding.html', user=user)
+
+
+@main_bp.route('/onboarding_confirm', methods=['GET', 'POST'])
+async def onboarding_confirm():
+    """Step 2: Review AI-autofilled profile and save"""
+    user = await auth0.get_user(g.store_options)
+    if not user:
+        return redirect(url_for('main.login'))
+    
+    profile = session.get('scholarship_profile', {})
+    if not profile:
+        return redirect(url_for('main.onboarding'))
+    
+    if request.method == 'POST':
+        profile['institution'] = request.form.get('institution', '')
+        profile['major'] = request.form.get('major', '')
+        profile['degree'] = request.form.get('degree', '')
+        profile['gpa'] = request.form.get('gpa_confirm', '')
+        profile['gender'] = request.form.get('gender', '')
+        profile['ethnicity'] = request.form.get('ethnicity', '')
+        profile['enrollment'] = request.form.get('enrollment', '')
+        profile['first_gen'] = request.form.get('first_gen', profile.get('first_gen', ''))
+        profile['citizenship'] = request.form.get('citizenship', profile.get('citizenship', ''))
+        
+        grad_year_str = request.form.get('grad_year')
+        profile['grad_year'] = int(grad_year_str) if grad_year_str and grad_year_str.isdigit() else 2025
+        
+        profile['interests'] = request.form.getlist('interests')
+        
+        aid_amount_str = request.form.get('aid_amount')
+        profile['aid_amount'] = float(aid_amount_str) if aid_amount_str else 0.0
+        
+        # Consolidate dynamic experiences
+        companies = request.form.getlist('exp_company[]')
+        roles = request.form.getlist('exp_role[]')
+        starts = request.form.getlist('exp_start[]')
+        ends = request.form.getlist('exp_end[]')
+        currents = request.form.getlist('exp_current[]')
+        vols = request.form.getlist('exp_volunteer[]')
+        hours = request.form.getlist('exp_hours[]')
+        descs = request.form.getlist('exp_desc[]')
+        
+        experiences = []
+        for i in range(len(companies)):
+            exp = {
+                'company': companies[i],
+                'role': roles[i] if i < len(roles) else "",
+                'start_date': starts[i] if i < len(starts) else "",
+                'end_date': ends[i] if i < len(ends) else "",
+                'current': currents[i] == 'true' if i < len(currents) else False,
+                'volunteer': vols[i] == 'true' if i < len(vols) else False,
+                'hours': hours[i] if i < len(hours) and hours[i] else None,
+                'description': descs[i] if i < len(descs) else ""
+            }
+            experiences.append(exp)
+        profile['experiences'] = experiences
+        
+        # Save to DB and mark onboarding complete
+        db_user = User.query.filter_by(auth0_sub=user['sub']).first()
+        if not db_user:
+            db_user = User(auth0_sub=user['sub'])
+            db.session.add(db_user)
+        db_user.from_dict(profile)
+        db.session.commit()
+        session['scholarship_profile'] = profile
+        session['onboarding_complete'] = True
+        return redirect('http://localhost:5000/')
+    
+    return render_template('onboarding_confirm.html', user=user, profile=profile)
 
 
 # --- Feature Routes ---
@@ -395,6 +508,5 @@ async def save_user_profile():
 
     db.session.commit()
     profile = db_user.to_dict()
->>>>>>> a01d58e (Refine onboarding flow and profile experience UI sync)
     session['scholarship_profile'] = profile
     return jsonify({"status": "ok", "profile": profile})

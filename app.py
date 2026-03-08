@@ -32,14 +32,17 @@ class ExperienceEntry(BaseModel):
     end_date: str = Field(description="End date (e.g. August 2022) or 'Present'")
     current: bool = Field(description="True if they currently work here")
     description: str = Field(description="Brief summary of responsibilities")
+    volunteer: bool = Field(description="True if this was a volunteer or unpaid role")
+    hours: int = Field(description="Total volunteer hours (estimate if not explicitly stated, otherwise 0)")
 
 class ResumeProfile(BaseModel):
     institution: str = Field(description="University or College name")
     major: str = Field(description="Field of Study or Major")
     degree: str = Field(description="Degree level (Undergraduate, Master's, PhD, High School)")
     grad_year: int = Field(description="Expected graduation year")
+    gpa: str = Field(description="Extracted GPA (e.g. 3.8/4.0 or 92%)")
     experiences: list[ExperienceEntry] = Field(description="List of professional or academic experiences")
-    interests: list[str] = Field(description="Relevant academic/professional interests (STEM, Arts, etc.)")
+    interests: list[str] = Field(description="Relevant academic/professional interests")
 
 def analyze_scholarship_match(user_profile: dict, scholarship_details: str):
     if not client: return '{"error": "API Key missing"}'
@@ -81,13 +84,20 @@ def parse_resume(resume_text: str):
             model="gemini-2.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
-                system_instruction="Extract structured data from the resume. If a field is missing, use a sensible default or 'Unknown'.",
+                system_instruction="Extract structured data from the resume. Identify volunteer roles and estimate total hours if possible. If a field is missing, use a sensible default or 'Unknown'. Categorize GPA into one of these EXACT strings: '90-100%', '80-89%', '70-79%', '60-69%', 'Below 60%'.",
                 response_mime_type="application/json",
                 response_schema=ResumeProfile,
             )
         )
-        print(f"DEBUG Gemini Response: {response.text}")
-        return json.loads(response.text)
+        print(f"DEBUG: Gemini Response JSON: {response.text}")
+        ai_data = json.loads(response.text)
+        
+        # Clean up experiences to ensure defaults
+        if 'experiences' in ai_data:
+            for exp in ai_data['experiences']:
+                exp.setdefault('volunteer', False)
+                exp.setdefault('hours', 0)
+        return ai_data
     except Exception as e:
         print(f"Gemini Parsing Error: {e}")
         return {

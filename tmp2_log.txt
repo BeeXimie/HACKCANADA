@@ -1,0 +1,115 @@
+commit 156979f0a0534d814bbfaff5a440570b2eecf5e7
+Author: Matteo <fotimatteo71@gmail.com>
+Date:   Sat Mar 7 22:15:08 2026 -0500
+
+    Fix Auth0 LogoutOptions import and add flask-cors dependency
+
+M	requirements.txt
+M	routes.py
+
+commit bca112b9079c433fe28fb4da264e6c4ff6a7f998
+Author: Matteo <fotimatteo71@gmail.com>
+Date:   Sat Mar 7 22:07:25 2026 -0500
+
+    Add delete account functionality and fix logout options
+
+M	routes.py
+M	templates/profile.html
+
+commit 6c907f81042687f90d9faad86656b09adc98fea5
+Merge: 23415e4 eee2ed2
+Author: Tanishq <tanishqmathur4@gmail.com>
+Date:   Sat Mar 7 22:00:42 2026 -0500
+
+    fix: resolve merge conflicts and integrate AI bookmarklet with teammate updates
+
+commit 23415e4ac5b767088c07be8fc14a3e9f374a5845
+Author: Tanishq <tanishqmathur4@gmail.com>
+Date:   Sat Mar 7 21:59:13 2026 -0500
+
+    feat: Add Chrome Extension, Magic Bookmarklet endpoints, and CORS support
+
+M	__pycache__/auth.cpython-313.pyc
+M	__pycache__/routes.cpython-313.pyc
+M	app.py
+M	auth.py
+A	chrome-extension/content.js
+A	chrome-extension/manifest.json
+A	chrome-extension/popup.html
+A	chrome-extension/popup.js
+A	docs/GEMINI_INTEGRATION.md
+M	frontend/package-lock.json
+M	frontend/package.json
+A	frontend/public/bookmarklet.js
+M	frontend/src/App.css
+M	frontend/src/App.js
+A	frontend/src/components/DocumentVault.js
+A	frontend/src/components/ProfileForm.js
+A	frontend/src/components/ScholarshipMatchCard.js
+M	frontend/src/setupProxy.js
+M	routes.py
+
+commit eee2ed2722a699b2700943e8928c5d96bdd4d801
+Author: Matteo <fotimatteo71@gmail.com>
+Date:   Sat Mar 7 21:49:28 2026 -0500
+
+    Refine onboarding flow and profile experience UI sync
+
+M	app.py
+A	app_stderr.txt
+A	app_stdout.txt
+A	canadian_cities.txt
+M	frontend/src/App.js
+M	frontend/src/setupProxy.js
+A	instance/scholarships.db
+A	models.py
+M	requirements.txt
+M	routes.py
+M	templates/index.html
+M	templates/onboarding.html
+M	templates/profile.html
+M	templates/recommendations.html
+M	templates/scholarships.html
+A	tmp/check_env.py
+A	tmp/list_models.py
+A	tmp/models.txt
+A	tmp/models_full.txt
+A	tmp/models_list.txt
+
+commit e610d47bb4965ddb394d01463edd353b20eb859c
+Author: Tanishq <tanishqmathur4@gmail.com>
+Date:   Sat Mar 7 20:19:13 2026 -0500
+
+    fix: explicit user fetch in auth0 callback and clean up logs
+
+M	__pycache__/auth.cpython-313.pyc
+M	__pycache__/routes.cpython-313.pyc
+M	auth.py
+M	routes.py
+
+commit e6a277a56d2642103d281d906d0401b55759cf52
+Author: Tanishq <tanishqmathur4@gmail.com>
+Date:   Sat Mar 7 19:16:47 2026 -0500
+
+    fix: resolve login loop by fixing setupProxy path mapping and JSON serialization in auth.py
+
+M	__pycache__/auth.cpython-313.pyc
+M	auth.py
+M	frontend/package.json
+M	frontend/src/setupProxy.js
+
+commit 5440ee68ccd9b29a24ffe0a3b13f4110ef28234b
+Author: Tanishq <tanishqmathur4@gmail.com>
+Date:   Sat Mar 7 19:01:33 2026 -0500
+
+    chore: Restore Auth0 Proxy Routing and Background Event Loop fixes
+
+A	.DS_Store
+M	__pycache__/auth.cpython-313.pyc
+M	__pycache__/routes.cpython-313.pyc
+M	app.py
+M	auth.py
+M	frontend/src/App.css
+M	frontend/src/App.js
+M	frontend/src/setupProxy.js
+M	routes.py

@@ -20,7 +20,7 @@ function App() {
   });
 
   useEffect(() => {
-    fetch('/api/auth/profile')
+    fetch('/api/user/profile')
       .then(res => {
         if (!res.ok) throw new Error('Not authenticated');
         return res.json();
@@ -33,9 +33,12 @@ function App() {
       });
   }, []);
 
+  const handleLogin = () => {
+    window.location.href = '/login';
+  };
+
   const handleLogout = () => {
-    // Ask Flask for the Auth0 logout URL, then redirect browser there
-    fetch('http://127.0.0.1:3000/api/auth/logout')
+    fetch('/logout')
       .then(res => res.json())
       .then(data => {
         if (data.logout_url) window.location.href = data.logout_url;
@@ -57,13 +60,12 @@ function App() {
       <header className="app-header">
         <h1 className="app-title">
           Find the best scholarships<br />
-          <span className="app-title-accent">effortlessly with AI</span>
+          <span className="app-title-accent">matched to you</span>
         </h1>
       </header>
 
       <p className="app-subtitle">
-        ScholarSync analyzes your unique profile to instantly match you with the
-        highest-probability scholarships and custom-generates application essays using Gemini 2.5.
+        ScholarSync matches you with scholarships and helps you draft application essays.
       </p>
 
       {/* Auth card */}

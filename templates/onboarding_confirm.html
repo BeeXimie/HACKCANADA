@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Confirm Your Profile - ScholarSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+      }
+      .experience-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .experience-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body
+    class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex flex-col items-center py-8 px-4"
+  >
+    <!-- Logo -->
+    <div class="mb-8 flex items-center justify-center gap-2 text-indigo-600">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-8 w-8"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+        <path d="M6 12v5c3 3 9 3 12 0v-5" />
+      </svg>
+      <span class="text-2xl font-bold tracking-tight text-slate-900"
+        >Scholar<span class="text-indigo-600">Sync</span></span
+      >
+    </div>
+
+    <!-- Container -->
+    <div class="w-full max-w-3xl glass-panel border border-white rounded-3xl shadow-xl overflow-hidden mb-8">
+      <div class="h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+
+      <div class="p-8 sm:p-10">
+        <div class="mb-8 flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full uppercase tracking-wider">Step 2 of 2</span>
+              <span class="text-xs text-slate-400 font-medium">Profile Verification</span>
+            </div>
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Review Your Profile</h1>
+            <p class="text-slate-500 mt-1">Our AI extracted this from your resume. Please verify and refine the details.</p>
+          </div>
+          <div class="hidden sm:block">
+            <div class="h-16 w-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 border border-indigo-100 shadow-inner">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <form action="/onboarding_confirm" method="POST" class="space-y-8">
+          <!-- Academic Section -->
+          <section>
+            <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              <h2 class="text-lg font-bold text-slate-800">Academic Background</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2" for="institution">Institution</label>
+                <input type="text" id="institution" name="institution" value="{{ profile.institution or '' }}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-medium text-slate-900" placeholder="e.g. University of Toronto">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2" for="major">Major / Field of Study</label>
+                <input type="text" id="major" name="major" value="{{ profile.major or '' }}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-medium text-slate-900" placeholder="e.g. Computer Science">
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2" for="degree">Degree</label>
+                  <select id="degree" name="degree" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-medium text-slate-900">
+                    <option value="Undergraduate" {% if profile.degree == 'Undergraduate' %}selected{% endif %}>Undergraduate</option>
+                    <option value="Master's" {% if profile.degree == "Master's" %}selected{% endif %}>Master's</option>
+                    <option value="PhD" {% if profile.degree == 'PhD' %}selected{% endif %}>PhD</option>
+                    <option value="High School" {% if profile.degree == 'High School' %}selected{% endif %}>High School</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2" for="gpa_confirm">GPA (Current)</label>
+                  <select id="gpa_confirm" name="gpa_confirm" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-medium text-slate-900">
+                    <option value="" disabled>Select GPA</option>
+                    <option value="90-100%" {% if profile.gpa == '90-100%' %}selected{% endif %}>90-100%</option>
+                    <option value="80-89%" {% if profile.gpa == '80-89%' %}selected{% endif %}>80-89%</option>
+                    <option value="70-79%" {% if profile.gpa == '70-79%' %}selected{% endif %}>70-79%</option>
+                    <option value="60-69%" {% if profile.gpa == '60-69%' %}selected{% endif %}>60-69%</option>
+                    <option value="Below 60%" {% if profile.gpa == 'Below 60%' %}selected{% endif %}>Below 60%</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2" for="grad_year">Grad Year</label>
+                  <input type="number" id="grad_year" name="grad_year" value="{{ profile.grad_year or 2025 }}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-medium text-slate-900">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2" for="aid_amount">Financial Need</label>
+                  <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                    <input type="number" id="aid_amount" name="aid_amount" value="{{ profile.aid_amount or 0 }}" class="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-medium text-slate-900">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+
+
+          <!-- Interests Section -->
+          <section>
+            <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+              <h2 class="text-lg font-bold text-slate-800">Interests</h2>
+            </div>
+            
+            <div id="interests-container" class="space-y-3">
+              <div class="flex flex-wrap gap-2 animate-in fade-in slide-in-from-bottom-2 duration-700">
+                {% for interest in profile.interests %}
+                  <div class="group relative">
+                    <input type="hidden" name="interests" value="{{ interest }}">
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-sm transition-all hover:bg-indigo-100">
+                      {{ interest }}
+                      <button type="button" onclick="this.parentElement.parentElement.remove()" class="ml-2 text-indigo-400 hover:text-indigo-600 focus:outline-none">
+                        <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg>
+                      </button>
+                    </span>
+                  </div>
+                {% endfor %}
+              </div>
+              <div class="flex gap-2">
+                <input type="text" id="interest-input" class="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="Add another (e.g. AI, Space, Cooking)">
+                <button type="button" onclick="addInterest()" class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-700 transition-colors">Add</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Experience Section -->
+          <section>
+            <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <h2 class="text-lg font-bold text-slate-800">Experience History</h2>
+            </div>
+
+            <div id="experience-list" class="space-y-6">
+              {% for exp in profile.experiences %}
+                <div class="experience-card bg-indigo-50/30 border border-indigo-100/50 rounded-2xl p-6 relative">
+                  <button type="button" onclick="this.parentElement.remove()" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition-colors">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                      <label class="block text-xs font-bold text-indigo-500 uppercase tracking-wider mb-1">Company / Org</label>
+                      <input type="text" name="exp_company[]" value="{{ exp.company }}" class="w-full bg-transparent border-b border-indigo-200 focus:border-indigo-500 focus:ring-0 py-1 font-bold text-lg text-slate-900">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Role</label>
+                      <input type="text" name="exp_role[]" value="{{ exp.role }}" class="w-full bg-transparent border-b border-slate-200 focus:border-indigo-500 focus:ring-0 py-1 font-medium text-slate-700">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Dates</label>
+                      <div class="flex items-center gap-2">
+                        <input type="text" name="exp_start[]" value="{{ exp.start_date }}" placeholder="Start" class="w-1/2 bg-transparent border-b border-slate-200 focus:border-indigo-500 focus:ring-0 py-1 text-sm text-slate-600">
+                        <span class="text-slate-400">→</span>
+                        <input type="text" name="exp_end[]" value="{{ exp.end_date }}" placeholder="End" class="w-1/2 bg-transparent border-b border-slate-200 focus:border-indigo-500 focus:ring-0 py-1 text-sm text-slate-600">
+                      </div>
+                    </div>
+                    <div class="md:col-span-2">
+                      <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Description</label>
+                      <textarea name="exp_desc[]" rows="2" class="w-full bg-transparent border-b border-slate-200 focus:border-indigo-500 focus:ring-0 py-1 text-sm text-slate-600 resize-none">{{ exp.description }}</textarea>
+                    </div>
+                    <input type="hidden" name="exp_current[]" value="{{ 'true' if exp.current else 'false' }}">
+                    <input type="hidden" name="exp_volunteer[]" value="{{ 'true' if exp.volunteer else 'false' }}">
+                    <input type="hidden" name="exp_hours[]" value="{{ exp.hours or '' }}">
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+            
+            <button type="button" onclick="addExperience()" class="mt-4 w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-500 font-bold hover:border-indigo-300 hover:text-indigo-500 hover:bg-indigo-50/30 transition-all flex items-center justify-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Add Experience Manually
+            </button>
+          </section>
+
+          <!-- Navigation -->
+          <div class="pt-8 flex flex-col sm:flex-row items-center gap-4">
+            <a href="/onboarding" class="w-full sm:w-auto px-8 py-4 text-slate-600 font-bold hover:text-slate-900 transition-colors flex items-center justify-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Resume Upload
+            </a>
+            <button type="submit" id="submit-btn" class="w-full sm:flex-1 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transform transition-all active:scale-[0.98] group flex items-center justify-center gap-2">
+              <span id="btn-text">Looks Perfect, Finish!</span>
+              <svg xmlns="http://www.w3.org/2000/svg" id="btn-icon" class="h-5 w-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l7-7m-7 7H3" />
+              </svg>
+              <svg id="loading-spinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <p class="text-slate-400 text-sm font-medium">
+      Secure application powered by ScholarSync.
+    </p>
+
+    <script>
+      function addInterest() {
+        const input = document.getElementById('interest-input');
+        const val = input.value.trim();
+        if (val) {
+          const container = document.querySelector('#interests-container > div');
+          const div = document.createElement('div');
+          div.className = 'group relative';
+          div.innerHTML = `
+            <input type="hidden" name="interests" value="${val}">
+            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-sm transition-all hover:bg-indigo-100">
+              ${val}
+              <button type="button" onclick="this.parentElement.parentElement.remove()" class="ml-2 text-indigo-400 hover:text-indigo-600 focus:outline-none">
+                <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg>
+              </button>
+            </span>
+          `;
+          container.appendChild(div);
+          input.value = '';
+        }
+      }
+
+      function addExperience() {
+        const list = document.getElementById('experience-list');
+        const div = document.createElement('div');
+        div.className = 'experience-card bg-white border border-slate-200 rounded-2xl p-6 relative';
+        div.innerHTML = `
+          <button type="button" onclick="this.parentElement.remove()" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition-colors">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          </button>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Company / Org</label>
+              <input type="text" name="exp_company[]" class="w-full bg-transparent border-b border-slate-200 focus:border-indigo-500 focus:ring-0 py-1 font-bold text-lg text-slate-900">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Role</label>
+              <input type="text" name="exp_role[]" class="w-full bg-transparent border-b border-slate-200 focus:border-indigo-500 focus:ring-0 py-1 font-medium text-slate-700">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Dates</label>
+              <div class="flex items-center gap-2">
+                <input type="text" name="exp_start[]" placeholder="Start" class="w-1/2 bg-transparent border-b border-slate-200 focus:border-indigo-500 focus:ring-0 py-1 text-sm text-slate-600">
+                <span class="text-slate-400">→</span>
+                <input type="text" name="exp_end[]" placeholder="End" class="w-1/2 bg-transparent border-b border-slate-200 focus:border-indigo-500 focus:ring-0 py-1 text-sm text-slate-600">
+              </div>
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Description</label>
+              <textarea name="exp_desc[]" rows="2" class="w-full bg-transparent border-b border-slate-200 focus:border-indigo-500 focus:ring-0 py-1 text-sm text-slate-600 resize-none"></textarea>
+            </div>
+            <input type="hidden" name="exp_current[]" value="false">
+            <input type="hidden" name="exp_volunteer[]" value="false">
+            <input type="hidden" name="exp_hours[]" value="">
+          </div>
+        `;
+        list.appendChild(div);
+      }
+
+      document.querySelector('form').addEventListener('submit', function() {
+        const btn = document.getElementById('submit-btn');
+        const text = document.getElementById('btn-text');
+        const icon = document.getElementById('btn-icon');
+        const spinner = document.getElementById('loading-spinner');
+        
+        btn.disabled = true;
+        btn.classList.add('opacity-80', 'cursor-not-allowed');
+        text.textContent = 'Saving Profile...';
+        icon.classList.add('hidden');
+        spinner.classList.remove('hidden');
+      });
+    </script>
+  </body>
+</html>

@@ -28,6 +28,7 @@ class User(db.Model):
     career_goals = db.Column(db.Text)
     interests = db.Column(db.Text) # Stored as comma-separated
     year_of_study = db.Column(db.String(128))
+    citizenship = db.Column(db.String(128))
     
     # Experiences stored as JSON string
     experiences_json = db.Column(db.Text, default='[]')
