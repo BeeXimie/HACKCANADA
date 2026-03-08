@@ -373,6 +373,7 @@ def api_score_scholarships():
     """Batch score a set of scholarships for the current user."""
     from app import batch_analyze_scholarships
     from models import UserScholarshipScore
+    from sqlalchemy import text
     
     user = session.get("user")
     if not user:
