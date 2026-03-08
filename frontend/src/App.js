@@ -19,6 +19,8 @@ function App() {
     error: null
   });
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   useEffect(() => {
     fetch('/api/user/profile')
       .then(res => {
@@ -45,11 +47,42 @@ function App() {
       });
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      const response = await fetch('/api/user/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+      if (data.logout_url) {
+        window.location.href = data.logout_url;
+      }
+    } catch (err) {
+      console.error("Delete failed", err);
+      alert("Delete failed. Please try again.");
+    }
+  };
+
   const myImage = cld.image('cld-sample-2');
   myImage.resize(fill().width(400).height(250));
 
   return (
     <div className="App">
+      {/* Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Delete Account?</h3>
+            <p>Are you sure? This action is permanent and will delete all your profile data, applications, and essays.</p>
+            <div className="modal-actions">
+              <button className="cancel-btn" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+              <button className="confirm-delete-btn" onClick={handleDeleteAccount}>Yes, Delete My Account</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pill badge */}
       <div className="app-badge">
@@ -81,6 +114,10 @@ function App() {
 
             <button className="auth-button logout-btn" onClick={handleLogout}>
               Log Out
+            </button>
+
+            <button className="auth-button delete-btn" onClick={() => setShowDeleteModal(true)}>
+              Delete Account
             </button>
 
             <div className="cloudinary-demo">

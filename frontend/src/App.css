@@ -233,11 +233,115 @@ body {
   }
 }
 
+/* Delete button */
+.auth-button.delete-btn {
+  border-color: rgba(255, 50, 50, 0.4);
+  color: #f87171;
+  font-size: 0.85rem;
+  margin-top: 1rem;
+}
+
+.auth-button.delete-btn:hover {
+  background: rgba(255, 0, 0, 0.08);
+  border-color: rgba(248, 113, 113, 0.6);
+  box-shadow: 0 0 25px rgba(255, 0, 0, 0.15);
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  background: #0f0f0f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2.5rem;
+  border-radius: 1.5rem;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.8);
+  text-align: left;
+}
+
+.modal-content h3 {
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+  color: #fff;
+  font-weight: 700;
+}
+
+.modal-content p {
+  color: #a0a0a0;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.cancel-btn {
+  background: transparent;
+  color: #666;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s;
+  font-family: 'Sora', sans-serif;
+}
+
+.cancel-btn:hover {
+  color: #999;
+}
+
+.confirm-delete-btn {
+  background: #b91c1c;
+  color: #fff;
+  border: none;
+  padding: 0.85rem 1.8rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-family: 'Sora', sans-serif;
+}
+
+.confirm-delete-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 0 30px rgba(220, 38, 38, 0.25);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @media (max-width: 600px) {
   .app-title {
-    font-size: 2.2rem;
+    font-size: 2.22rem;
   }
   .app-subtitle {
     font-size: 0.95rem;
+  }
+  .modal-content {
+    padding: 2rem 1.5rem;
   }
 }

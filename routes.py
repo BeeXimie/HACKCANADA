@@ -5,7 +5,17 @@ import os
 import json
 import sqlite3
 
+from functools import wraps
+
 main_bp = Blueprint('main', __name__)
+
+def requires_auth(f):
+    @wraps(f)
+    async def decorated(*args, **kwargs):
+        if 'user' not in session:
+            return jsonify({"error": "Unauthorized"}), 401
+        return await f(*args, **kwargs)
+    return decorated
 
 # --- Authentication & User Profile Routes ---
 
@@ -683,4 +693,45 @@ def draft_essay_real():
         return jsonify({"draft": "• AI Error: Failed to generate response.\n• Please check API key status.\n• Ensure the backend is connected to the internet."})
     
 
-
+@main_bp.route('/api/user/delete', methods=['POST'])
+@requires_auth
+async def delete_account():
+    """Deletes the current user and all associated data."""
+    user = session.get("user")
+    
+    db_user = User.query.filter_by(auth0_sub=user['sub']).first()
+    
+    if db_user:
+        try:
+            # 1. Delete scoring data
+            db.session.execute(db.text("DELETE FROM user_scholarship_scores WHERE user_id = :uid"), {"uid": db_user.id})
+            
+            # 2. Delete applications (placeholder for future/other tables)
+            try:
+                db.session.execute(db.text("DELETE FROM user_applications WHERE user_id = :uid"), {"uid": db_user.id})
+            except:
+                pass # Table might not exist yet
+                
+            # 3. Delete essays (placeholder for future/other tables)
+            try:
+                db.session.execute(db.text("DELETE FROM user_essays WHERE user_id = :uid"), {"uid": db_user.id})
+            except:
+                pass # Table might not exist yet
+                
+            # 4. Delete the user
+            db.session.delete(db_user)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": f"Failed to delete account data: {str(e)}"}), 500
+    
+    # Clear session
+    session.clear()
+    
+    # Get Auth0 logout URL
+    logout_url = run_async(auth0.logout(g.store_options))
+    
+    return jsonify({
+        "status": "success",
+        "logout_url": logout_url
+    })
