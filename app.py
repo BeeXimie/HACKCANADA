@@ -4,6 +4,7 @@ load_dotenv(override=True) # Load env vars before anything else
 import os
 from flask import Flask, request, g
 from types import SimpleNamespace
+from werkzeug.middleware.proxy_fix import ProxyFix
 from auth import auth0
 from routes import main_bp
 from google import genai
@@ -145,6 +146,9 @@ def parse_resume(resume_text: str):
 app = Flask(__name__)
 app.secret_key = os.getenv('AUTH0_SECRET')
 
+# Fix Flask behind Nginx reverse proxy: trust X-Forwarded-* headers
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 # Database configuration 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "scholarships.db")}'
@@ -155,11 +159,13 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-# Configure session for Auth0
+# Configure session for Auth0 behind HTTP reverse proxy
 app.config.update(
-    SESSION_COOKIE_SECURE=False,  # Set to True in production with HTTPS
+    SESSION_COOKIE_SECURE=False,     # False because we're on HTTP (set True with HTTPS)
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SAMESITE='Lax',   # Lax is fine for same-domain Auth0 redirects
+    SESSION_COOKIE_NAME='session',   # Explicit cookie name
+    PERMANENT_SESSION_LIFETIME=3600, # 1-hour session lifetime
 )
 
 @app.before_request
