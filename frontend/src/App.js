@@ -33,12 +33,9 @@ function App() {
       });
   }, []);
 
-  const handleLogin = () => {
-    window.location.href = '/login';
-  };
-
   const handleLogout = () => {
-    fetch('/api/auth/logout')
+    // Ask Flask for the Auth0 logout URL, then redirect browser there
+    fetch('http://127.0.0.1:3000/api/auth/logout')
       .then(res => res.json())
       .then(data => {
         if (data.logout_url) window.location.href = data.logout_url;

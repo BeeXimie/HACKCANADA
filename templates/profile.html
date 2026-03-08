@@ -212,33 +212,62 @@
                 <svg class="h-5 w-5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
               </div>
               <div>
-                <h3 class="font-bold text-slate-900">Uploaded Documents</h3>
-                <p class="text-sm text-slate-500">Files provided during onboarding</p>
-              </div>
+            <div>
+              <h3 class="font-bold text-slate-900">Uploaded Documents</h3>
+              <p class="text-sm text-slate-500">Files provided during onboarding</p>
             </div>
-            <!-- Future link to trigger file upload modal -->
-            <button class="text-sm font-medium text-indigo-600 hover:text-indigo-800 edit-only">Manage Files</button>
           </div>
-          <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50">
-              <div class="h-10 w-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center">
+        </div>
+        <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-3" id="resume-container">
+            <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50 transition-all duration-300" id="view-resume-box">
+              <div class="h-10 w-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center transition-colors duration-300" id="view-resume-icon">
                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-slate-900 truncate" id="view-resume">No resume uploaded</p>
-                <p class="text-xs text-slate-500">PDF Document</p>
+                <p class="text-sm font-semibold text-slate-900 truncate transition-all duration-300" id="view-resume">No resume uploaded</p>
+                <p class="text-xs text-slate-500">Resume / CV</p>
               </div>
             </div>
-            <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50">
-              <div class="h-10 w-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center">
+            <div class="edit-only mt-2 flex items-center justify-between">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">Replace Resume</label>
+                <input type="file" name="resume" accept=".pdf" onchange="if(this.files.length > 0) { document.getElementById('view-resume').textContent = this.files[0].name; document.getElementById('view-resume').classList.add('text-indigo-600'); document.getElementById('delete_resume').value='false'; const btn = this.parentElement.nextElementSibling; btn.classList.remove('hidden'); const box = document.getElementById('view-resume-box'); box.classList.remove('bg-red-50/50', 'border-red-100'); box.classList.add('bg-slate-50', 'border-slate-100'); const icon = document.getElementById('view-resume-icon'); icon.classList.remove('bg-red-100', 'text-red-500'); icon.classList.add('bg-indigo-100', 'text-indigo-600'); document.getElementById('view-resume').classList.remove('line-through', 'text-red-500'); }" class="w-full text-xs text-slate-500 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+              </div>
+              <button type="button" onclick="markForDeletion('resume', this)" class="text-xs text-slate-400 hover:text-red-500 transition-colors bg-white px-2 py-1 rounded-lg border border-transparent hover:border-red-100">
+                <span class="flex items-center gap-1">
+                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                  Delete
+                </span>
+              </button>
+              <input type="hidden" name="delete_resume" id="delete_resume" value="false">
+            </div>
+          </div>
+          <div class="space-y-3" id="transcript-container">
+            <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50 transition-all duration-300" id="view-transcript-box">
+              <div class="h-10 w-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center transition-colors duration-300" id="view-transcript-icon">
                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-slate-900 truncate" id="view-transcript">No transcript uploaded</p>
-                <p class="text-xs text-slate-500">PDF Document</p>
+                <p class="text-sm font-semibold text-slate-900 truncate transition-all duration-300" id="view-transcript">No transcript uploaded</p>
+                <p class="text-xs text-slate-500">Transcript</p>
               </div>
             </div>
+            <div class="edit-only mt-2 flex items-center justify-between">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">Replace Transcript</label>
+                <input type="file" name="transcript" accept=".pdf" onchange="if(this.files.length > 0) { document.getElementById('view-transcript').textContent = this.files[0].name; document.getElementById('view-transcript').classList.add('text-emerald-600'); document.getElementById('delete_transcript').value='false'; const btn = this.parentElement.nextElementSibling; btn.classList.remove('hidden'); const box = document.getElementById('view-transcript-box'); box.classList.remove('bg-red-50/50', 'border-red-100'); box.classList.add('bg-slate-50', 'border-slate-100'); const icon = document.getElementById('view-transcript-icon'); icon.classList.remove('bg-red-100', 'text-red-500'); icon.classList.add('bg-emerald-100', 'text-emerald-600'); document.getElementById('view-transcript').classList.remove('line-through', 'text-red-500'); }" class="w-full text-xs text-slate-500 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+              </div>
+              <button type="button" onclick="markForDeletion('transcript', this)" class="text-xs text-slate-400 hover:text-red-500 transition-colors bg-white px-2 py-1 rounded-lg border border-transparent hover:border-red-100">
+                <span class="flex items-center gap-1">
+                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                  Delete
+                </span>
+              </button>
+              <input type="hidden" name="delete_transcript" id="delete_transcript" value="false">
+            </div>
           </div>
+        </div>
         </div>
 
         <!-- Scholarship Profile Form -->
@@ -285,17 +314,35 @@
               <div>
                 <label class="block text-sm font-bold text-slate-700 mb-1" for="gpa">GPA</label>
                 <div id="view-gpa" class="data-text data-empty view-only">Not set</div>
-                <div class="relative edit-only">
-                  <input id="gpa" name="gpa" type="number" min="0" max="4" step="0.01" placeholder="e.g. 3.7"
-                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
-                  <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">/ 4.0</span>
-                </div>
+                <select id="gpa" name="gpa"
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  <option value="" disabled selected>Select range</option>
+                  <option value="90-100">90-100% (A+)</option>
+                  <option value="80-89">80-89% (A)</option>
+                  <option value="70-79">70-79% (B)</option>
+                  <option value="60-69">60-69% (C)</option>
+                  <option value="Below 60">Below 60%</option>
+                </select>
               </div>
               <div>
                 <label class="block text-sm font-bold text-slate-700 mb-1" for="grad-year">Expected Graduation Year</label>
                 <div id="view-grad-year" class="data-text data-empty view-only">Not set</div>
                 <input id="grad-year" name="grad_year" type="number" min="2025" max="2035" placeholder="e.g. 2027"
                   class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="year-of-study">Year of Study</label>
+                <div id="view-year-of-study" class="data-text data-empty view-only">Not set</div>
+                <select id="year-of-study" name="year_of_study"
+                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                  <option value="" disabled selected>Select year</option>
+                  <option>Incoming First Year</option>
+                  <option>1st Year</option>
+                  <option>2nd Year</option>
+                  <option>3rd Year</option>
+                  <option>4th Year</option>
+                  <option>Graduate</option>
+                </select>
               </div>
               <div>
                 <label class="block text-sm font-bold text-slate-700 mb-1" for="enrollment">Enrollment Status</label>
@@ -402,7 +449,7 @@
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-bold text-slate-700 mb-1" for="location">Location (from Onboarding)</label>
+                <label class="block text-sm font-bold text-slate-700 mb-1" for="location">Location</label>
                 <div id="view-location" class="data-text data-empty view-only">Not set</div>
                 <input id="location" name="location" type="text" placeholder="e.g. Ontario, CA"
                   class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
@@ -434,47 +481,35 @@
             </div>
           </div>
 
-          <!-- Goals & Interests -->
+          <!-- Removed Goals & Interests per user request -->
+          
+          <!-- Experience & Academic Extracurriculars -->
           <div class="bg-white rounded-2xl border border-slate-200 shadow-sm card-hover transition-shadow mb-6">
             <div class="px-6 pt-6 pb-4 border-b border-slate-100 flex items-center gap-3">
-              <div class="h-9 w-9 rounded-xl bg-amber-50 flex items-center justify-center">
-                <svg class="h-5 w-5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+              <div class="h-9 w-9 rounded-xl bg-indigo-50 flex items-center justify-center">
+                <svg class="h-5 w-5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
               </div>
               <div>
-                <h3 class="font-bold text-slate-900">Goals & Interests</h3>
-                <p class="text-sm text-slate-500">Helps our AI find the best opportunities for you</p>
+                <h3 class="font-bold text-slate-900">Experience & Extracurriculars</h3>
+                <p class="text-sm text-slate-500">Your professional and academic background</p>
               </div>
             </div>
             <div class="p-6 space-y-5">
               <div>
-                <label class="block text-sm font-bold text-slate-700 mb-1" for="career-goals">Career Goals</label>
-                <div id="view-career-goals" class="data-text data-empty view-only whitespace-pre-wrap">Not set</div>
-                <textarea id="career-goals" name="career_goals" rows="3"
-                  placeholder="Describe your career aspirations and what you hope to accomplish after graduation..."
-                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 resize-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"></textarea>
-              </div>
-              <div>
-                <label class="block text-sm font-bold text-slate-700 mb-2">Areas of Interest</label>
-                <div id="view-interests" class="flex flex-wrap gap-2 view-only">
+                <label class="block text-sm font-bold text-slate-700 mb-2">Work & Volunteer History</label>
+                <div id="view-experiences" class="space-y-4 view-only">
                   <span class="data-empty italic text-sm text-slate-400">Not set</span>
                 </div>
-                <!-- Interactive Tag Selector (Edit Mode Only) -->
-                <div class="flex flex-wrap gap-2 edit-only" id="interests-container">
-                  {% for tag in ['STEM', 'Arts & Humanities', 'Business', 'Public Service', 'Healthcare', 'Law', 'Education', 'Entrepreneurship', 'Research', 'Environment', 'Social Justice', 'Technology'] %}
-                  <button type="button" onclick="toggleTag(this)"
-                    class="interest-tag px-3 py-1.5 rounded-full text-sm font-medium border border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
-                    {{ tag }}
-                  </button>
-                  {% endfor %}
+                <div class="edit-only space-y-3">
+                  <div class="flex items-center justify-between mb-2">
+                      <p class="text-xs text-slate-500">Add or edit your experiences.</p>
+                      <button type="button" onclick="addExperience()" class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-lg hover:bg-indigo-100 transition-colors">
+                          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                          Add Experience
+                      </button>
+                  </div>
+                  <div id="experience-container" class="space-y-4"></div>
                 </div>
-                <input type="hidden" name="interests" id="interests-hidden">
-              </div>
-              <div class="pt-2">
-                <label class="block text-sm font-bold text-slate-700 mb-1" for="experiences">Experiences & Extracurriculars</label>
-                <div id="view-experiences" class="data-text data-empty view-only whitespace-pre-wrap">Not set</div>
-                <textarea id="experiences" name="experiences" rows="4"
-                  placeholder="List clubs, volunteering, leadership roles, awards, publications (from onboarding)..."
-                  class="edit-only w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder-slate-400 resize-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"></textarea>
               </div>
             </div>
           </div>
@@ -494,6 +529,59 @@
             </div>
           </div>
         </form>
+
+        <!-- Experience Template -->
+        <template id="experience-template">
+          <div class="experience-card border border-slate-100 bg-slate-50/50 rounded-2xl p-5 relative group">
+              <button type="button" onclick="this.parentElement.remove()" class="absolute top-4 right-4 p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+              </button>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                      <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Company</label>
+                      <input type="text" name="exp_company[]" placeholder="e.g. Google" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 transition-all">
+                  </div>
+                  <div>
+                      <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Role</label>
+                      <input type="text" name="exp_role[]" placeholder="e.g. Software Intern" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 transition-all">
+                  </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div>
+                      <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Start Date</label>
+                      <input type="text" name="exp_start[]" placeholder="MM/YYYY" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 transition-all">
+                  </div>
+                  <div>
+                      <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">End Date</label>
+                      <input type="text" name="exp_end[]" placeholder="MM/YYYY" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 transition-all">
+                  </div>
+                  <div class="flex items-end pb-2">
+                      <label class="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4" onchange="this.nextElementSibling.value = this.checked ? 'true' : 'false'">
+                          <input type="hidden" name="exp_current[]" value="false">
+                          <span class="text-xs text-slate-500 font-medium">Currently work here</span>
+                      </label>
+                  </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div class="flex items-center my-auto pt-4">
+                      <label class="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4" onchange="this.nextElementSibling.value = this.checked ? 'true' : 'false'; const hours = this.closest('.grid').querySelector('input[name=\'exp_hours[]\']'); hours.disabled = !this.checked; if(!this.checked) hours.value=''">
+                          <input type="hidden" name="exp_volunteer[]" value="false">
+                          <span class="text-xs text-slate-500 font-medium">Volunteer Experience?</span>
+                      </label>
+                  </div>
+                  <div>
+                      <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Volunteer Hours</label>
+                      <input type="number" name="exp_hours[]" min="0" disabled placeholder="e.g. 100" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 transition-all">
+                  </div>
+              </div>
+              <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Description</label>
+                  <textarea name="exp_desc[]" rows="2" placeholder="Briefly describe your responsibilities..." class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 transition-all resize-none"></textarea>
+              </div>
+          </div>
+        </template>
 
       </div>
     </div>
@@ -545,6 +633,61 @@
       document.getElementById('interests-hidden').value = active.join(',');
     }
 
+    function markForDeletion(type, btn) {
+      document.getElementById(`delete_${type}`).value = 'true';
+      const box = document.getElementById(`view-${type}-box`);
+      if (box) {
+        box.classList.add('bg-red-50/50', 'border-red-100');
+        box.classList.remove('bg-slate-50', 'border-slate-100');
+      }
+      
+      const icon = document.getElementById(`view-${type}-icon`);
+      if (icon) {
+        icon.classList.add('bg-red-100', 'text-red-500');
+        icon.classList.remove('bg-indigo-100', 'text-indigo-600', 'bg-emerald-100', 'text-emerald-600');
+      }
+
+      const text = document.getElementById(`view-${type}`);
+      if (text) {
+        text.textContent = 'To be deleted';
+        text.classList.add('line-through', 'text-red-500');
+        text.classList.remove('text-slate-900', 'text-indigo-700', 'text-emerald-700');
+      }
+
+      btn.classList.add('hidden'); // hide the delete button
+    }
+
+    function addExperience(data = null) {
+      const container = document.getElementById('experience-container');
+      const template = document.getElementById('experience-template');
+      const clone = template.content.cloneNode(true);
+      
+      if (data) {
+        clone.querySelector('input[name="exp_company[]"]').value = data.company || '';
+        clone.querySelector('input[name="exp_role[]"]').value = data.role || '';
+        clone.querySelector('input[name="exp_start[]"]').value = data.start_date || '';
+        clone.querySelector('input[name="exp_end[]"]').value = data.end_date || '';
+        clone.querySelector('textarea[name="exp_desc[]"]').value = data.description || '';
+        
+        if (data.current) {
+          const cb = clone.querySelectorAll('input[type="checkbox"]')[0];
+          cb.checked = true;
+          clone.querySelector('input[name="exp_current[]"]').value = 'true';
+        }
+
+        if (data.volunteer) {
+          const cb = clone.querySelectorAll('input[type="checkbox"]')[1];
+          cb.checked = true;
+          clone.querySelector('input[name="exp_volunteer[]"]').value = 'true';
+          const hoursInput = clone.querySelector('input[name="exp_hours[]"]');
+          hoursInput.disabled = false;
+          hoursInput.value = data.hours || '';
+        }
+      }
+      
+      container.appendChild(clone);
+    }
+
     async function saveProfile(e) {
       e.preventDefault();
       const btn = document.getElementById('save-btn');
@@ -557,39 +700,45 @@
       `;
 
       const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData.entries());
 
       try {
         const res = await fetch('/api/user/profile', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
+          body: formData
         });
 
         if (res.ok) {
           status.textContent = '✅ Profile saved successfully!';
           status.className = 'text-sm text-emerald-600 font-medium';
+          
+          setTimeout(() => { 
+            status.textContent = ''; 
+            toggleEditMode(); // Return to view mode on success
+          }, 1500);
         } else {
-          const err = await res.json();
-          status.textContent = `⚠️ ${err.error || 'Failed to save. Try again.'}`;
+          try {
+            const err = await res.json();
+            status.textContent = `⚠️ ${err.error || 'Failed to save. Try again.'}`;
+          } catch {
+            status.textContent = '⚠️ Server error – please try again.';
+          }
           status.className = 'text-sm text-red-500 font-medium';
+          btn.disabled = false;
+          btn.innerHTML = `
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save Profile
+          `;
         }
-      } catch {
+      } catch (err) {
+        console.error('Save error:', err);
         status.textContent = '⚠️ Network error – profile not saved.';
         status.className = 'text-sm text-red-500 font-medium';
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save Profile
+        `;
       }
-
-      btn.disabled = false;
-      btn.innerHTML = `
-        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Save Profile
-      `;
-      setTimeout(() => { 
-        status.textContent = ''; 
-        if (res.ok) {
-          toggleEditMode(); // Return to view mode on success
-        }
-      }, 2000);
     }
 
     // Load saved profile on page load
@@ -614,18 +763,52 @@
 
         const fields = ['institution','major','degree','gpa','grad_year','enrollment',
           'income_bracket','first_gen','fafsa','aid_amount','ethnicity','gender',
-          'location','disability','veteran','career_goals','experiences'];
+          'location','disability','veteran','career_goals','experiences', 'year_of_study'];
         
         fields.forEach(f => {
           // Input field editing
           const el = document.getElementById(f.replace(/_/g, '-')) || document.querySelector(`[name="${f}"]`);
-          if (el && profile[f]) el.value = profile[f];
+          if (el) {
+            if (profile[f]) el.value = profile[f];
+            // SPECIAL CASE: first_gen is yes/no in data but might need mapping if options change
+          }
           
           // Static text display
           const viewEl = document.getElementById(`view-${f.replace(/_/g, '-')}`);
           if (viewEl && profile[f]) {
             let displayValue = profile[f];
+            
+            if (f === 'experiences' && Array.isArray(displayValue)) {
+              if (displayValue.length > 0) {
+                viewEl.innerHTML = displayValue.map(exp => `
+                  <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                    <div class="flex justify-between items-start mb-1">
+                      <div class="flex items-center gap-2">
+                        <h4 class="font-bold text-indigo-900">${exp.company || 'Unnamed Company'}</h4>
+                        ${exp.volunteer ? `<span class="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full uppercase tracking-wider">Volunteer${exp.hours ? ` - ${exp.hours} hrs` : ''}</span>` : ''}
+                      </div>
+                      <span class="text-[10px] font-bold px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full uppercase tracking-wider">
+                        ${exp.start_date || 'N/A'} - ${exp.current ? 'Present' : (exp.end_date || 'N/A')}
+                      </span>
+                    </div>
+                    <p class="text-sm font-semibold text-slate-700">${exp.role || 'No Role specified'}</p>
+                    ${exp.description ? `<p class="text-xs text-slate-500 mt-2 line-clamp-2">${exp.description}</p>` : ''}
+                  </div>
+                `).join('');
+                viewEl.classList.remove('data-empty');
+              }
+              
+              // Also sync experience-container in edit mode
+              const container = document.getElementById('experience-container');
+              container.innerHTML = '';
+              if (displayValue && Array.isArray(displayValue)) {
+                displayValue.forEach(exp => addExperience(exp));
+              }
+              return; // Skip default handling
+            }
+
             if (f === 'aid_amount' && displayValue) displayValue = `$${displayValue}`;
+            if (f === 'gpa' && displayValue && displayValue.includes('-')) displayValue = `${displayValue}%`;
             viewEl.textContent = displayValue;
             viewEl.classList.remove('data-empty');
             viewEl.classList.add('text-indigo-950');

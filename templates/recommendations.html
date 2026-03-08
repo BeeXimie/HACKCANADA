@@ -91,7 +91,7 @@
         <button onclick="openSidebar()" class="lg:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg">
           <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
         </button>
-        <h1 class="text-lg font-bold text-slate-900">AI Recommendations</h1>
+        <h1 class="text-lg font-bold text-slate-900">Personalized Recommendations</h1>
       </div>
     </header>
 
@@ -100,13 +100,13 @@
 
         <div>
           <h2 class="text-2xl font-bold text-slate-900">Personalized Insights</h2>
-          <p class="mt-1 text-sm text-slate-500">Powered by Gemini AI — get personalized scholarship strategy recommendations based on your profile.</p>
+          <p class="mt-1 text-sm text-slate-500">Get personalized scholarship strategy recommendations based on your profile.</p>
         </div>
 
         <!-- Gemini AI analyze section -->
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
           <h3 class="text-lg font-bold text-slate-900 mb-4">📝 Paste a Scholarship Description</h3>
-          <p class="text-sm text-slate-600 mb-4">Enter the details of a scholarship you're interested in. Our AI will evaluate your match and give personalized tips.</p>
+          <p class="text-sm text-slate-600 mb-4">Enter the details of a scholarship you're interested in. We will evaluate your match and give personalized tips.</p>
           <textarea id="scholarship-input" rows="5" placeholder="Paste the scholarship description here…" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-colors resize-y"></textarea>
           <div class="mt-4 flex gap-3">
             <button onclick="analyzeScholarship()" id="analyze-btn" class="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
@@ -119,7 +119,7 @@
         <!-- Results area -->
         <div id="analysis-result" class="hidden">
           <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
-            <h3 class="text-lg font-bold text-slate-900">✨ AI Analysis</h3>
+            <h3 class="text-lg font-bold text-slate-900">Match Analysis</h3>
             <div id="analysis-content" class="prose prose-sm text-slate-700"></div>
           </div>
         </div>
