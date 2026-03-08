@@ -24,13 +24,13 @@ def login():
 def callback():
     """Handle Auth0 callback after login"""
     try:
-        result = run_async(auth0.complete_interactive_login(str(request.url), g.store_options))
-        session["user"] = result.get("user")
+        # Complete the login handshake
+        run_async(auth0.complete_interactive_login(str(request.url), g.store_options))
         
-        profile_complete = session.get('onboarding_complete', False)
-        if not profile_complete:
-            return redirect("http://localhost:3000/onboarding")
-            
+        # Explicitly fetch the user profile now that the handshake is done
+        user = run_async(auth0.get_user(g.store_options))
+        session["user"] = user
+        
         return redirect("http://localhost:3000/")
     except Exception as e:
         return f"Authentication error: {str(e)}", 400
