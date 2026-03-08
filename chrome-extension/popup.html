@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 200px;
+      margin: 0;
+      padding: 15px;
+      background: #0f172a;
+      color: #fff;
+      font-family: system-ui, -apple-system, sans-serif;
+      text-align: center;
+    }
+    .glass-btn {
+      background: rgba(129, 140, 248, 0.2);
+      border: 1px solid rgba(129, 140, 248, 0.5);
+      backdrop-filter: blur(10px);
+      color: white;
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+    }
+    .glass-btn:hover {
+      background: rgba(129, 140, 248, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <button id="fill-btn" class="glass-btn">🪄 Magic Fill</button>
+  <script src="popup.js"></script>
+</body>
+</html>
