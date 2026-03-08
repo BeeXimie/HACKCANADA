@@ -11,7 +11,6 @@ from pydantic import BaseModel, Field
 import json
 from models import db, User, UserScholarshipScore
 
-load_dotenv(override=True)
 api_key = os.getenv('GEMINI_API_KEY')
 if api_key:
     print(f"DEBUG: Using GEMINI_API_KEY: {api_key[:8]}...{api_key[-4:]}")

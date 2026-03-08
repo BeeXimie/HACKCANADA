@@ -142,6 +142,7 @@
             
             <div id="interests-container" class="space-y-3">
               <div class="flex flex-wrap gap-2 animate-in fade-in slide-in-from-bottom-2 duration-700">
+                {% if profile.interests %}
                 {% for interest in profile.interests %}
                   <div class="group relative">
                     <input type="hidden" name="interests" value="{{ interest }}">
@@ -153,6 +154,7 @@
                     </span>
                   </div>
                 {% endfor %}
+                {% endif %}
               </div>
               <div class="flex gap-2">
                 <input type="text" id="interest-input" class="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="Add another (e.g. AI, Space, Cooking)">

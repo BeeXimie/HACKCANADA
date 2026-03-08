@@ -13,6 +13,14 @@ main_bp = Blueprint('main', __name__)
 def index():
     """Home page - Landing page"""
     user = session.get("user")
+    print(f"DEBUG: Index hit. User in session: {bool(user)}")
+    if user:
+        db_user = User.query.filter_by(auth0_sub=user['sub']).first()
+        if db_user:
+            print(f"DEBUG: DB User found: {db_user.auth0_sub}, Institution: {db_user.institution}, Location: {db_user.location}")
+        else:
+            print(f"DEBUG: No DB User found for sub: {user['sub']}")
+            
     return render_template('index.html', user=user)
 
 @main_bp.route('/login')
@@ -32,6 +40,12 @@ def callback():
         user = run_async(auth0.get_user(g.store_options))
         session["user"] = user
         
+        # Check if user needs onboarding
+        db_user = User.query.filter_by(auth0_sub=user['sub']).first()
+        if not db_user or not db_user.location:
+            print("DEBUG: Callback redirecting to onboarding")
+            return redirect(url_for('main.onboarding'))
+            
         # Dynamic redirect back to the app home
         return redirect(url_for('main.index'))
     except Exception as e:
@@ -57,7 +71,10 @@ def profile():
 def logout():
     """Logout and redirect to Auth0 logout"""
     session.clear()
-    logout_url = run_async(auth0.logout(g.store_options))
+    class Options:
+        def __init__(self, **kwargs): self.__dict__.update(kwargs)
+    opts = Options(request=request, return_to=request.host_url)
+    logout_url = run_async(auth0.logout(opts))
     # Return JSON for React if requested
     if request.headers.get('Accept') == 'application/json' or request.args.get('json'):
         return jsonify({"logout_url": logout_url})
@@ -305,9 +322,9 @@ async def onboarding_confirm():
         
         # Ensure db_user.id is populated then reset AI scores on profile update
         db.session.flush()
-        from models import UserScholarshipScore
         UserScholarshipScore.query.filter_by(user_id=db_user.id).delete()
         
+        print(f"DEBUG: Saving complete profile for {db_user.auth0_sub}. Institution: {db_user.institution}")
         db.session.commit()
         session['scholarship_profile'] = profile
         session['onboarding_complete'] = True
@@ -503,7 +520,10 @@ def api_profile():
 @main_bp.route('/api/auth/logout')
 def api_logout():
     """Return Auth0 logout URL as JSON for the React frontend"""
-    logout_url = run_async(auth0.logout(g.store_options))
+    class Options:
+        def __init__(self, **kwargs): self.__dict__.update(kwargs)
+    opts = Options(request=request, return_to=request.host_url)
+    logout_url = run_async(auth0.logout(opts))
     return jsonify({"logout_url": logout_url})
 
 # --- User Profile API ---
@@ -618,6 +638,42 @@ async def save_user_profile():
     profile = db_user.to_dict()
     session['scholarship_profile'] = profile
     return jsonify({"status": "ok", "profile": profile})
+
+@main_bp.route('/api/user/delete', methods=['POST'])
+def delete_user_account():
+    """Permanently delete user account and all data via form submission."""
+    print("DEBUG: Entered delete_user_account (Form Submit)")
+    try:
+        user = session.get("user")
+        if not user:
+            print(f"DEBUG: Delete failed - No user in session. Keys: {list(session.keys())}")
+            # If session is empty, they might already be logged out or cookie blocked
+            return "Unauthorized: Please log in again to delete your account.", 401
+        
+        print(f"DEBUG: Deleting user data for: {user.get('sub')}")
+        db_user = User.query.filter_by(auth0_sub=user['sub']).first()
+        
+        if db_user:
+            uid = db_user.id
+            UserScholarshipScore.query.filter_by(user_id=uid).delete()
+            db.session.delete(db_user)
+            db.session.commit()
+            print(f"DEBUG: DB Record for {uid} deleted successfully")
+        
+        session.clear()
+        
+        # Force a logout redirect
+        class Options:
+            def __init__(self, **kwargs): self.__dict__.update(kwargs)
+        opts = Options(request=request, return_to=request.host_url)
+        logout_url = run_async(auth0.logout(opts))
+        print(f"DEBUG: Delete success. Redirecting to Auth0: {logout_url}")
+        return redirect(logout_url)
+
+    except Exception as e:
+        import traceback
+        print(f"ERROR in delete_user_account: {traceback.format_exc()}")
+        return f"Error deleting account: {str(e)}", 500
 
 # --- Magic Bookmarklet API Endpoints ---
 
