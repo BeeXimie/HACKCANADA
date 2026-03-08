@@ -3,6 +3,8 @@ load_dotenv(override=True) # Load env vars before anything else
 
 import os
 from flask import Flask, request, g
+from types import SimpleNamespace
+from werkzeug.middleware.proxy_fix import ProxyFix
 from auth import auth0
 from routes import main_bp
 from google import genai
@@ -11,14 +13,23 @@ from pydantic import BaseModel, Field
 import json
 from models import db, User, UserScholarshipScore
 
+<<<<<<< HEAD
 api_key = os.getenv('GEMINI_API_KEY')
 if api_key:
     print(f"DEBUG: Using GEMINI_API_KEY: {api_key[:8]}...{api_key[-4:]}")
     # Explicitly pass api_key to the client
     client = genai.Client(api_key=api_key)
 else:
+=======
+load_dotenv(override=True)
+
+def get_gemini_client():
+    api_key = os.getenv('GEMINI_API_KEY')
+    if api_key:
+        return genai.Client(api_key=api_key)
+>>>>>>> c328bac88b4696c398e21c1705df0ddbc4d40ea7
     print("WARNING: GEMINI_API_KEY not found in environment. AI features will be disabled.")
-    client = None
+    return None
 class ScholarshipAnalysis(BaseModel):
     match_score: int = Field(description="Score from 0 to 100 on how well the user matches the scholarship")
     key_strengths: list[str] = Field(description="3 bullet points highlighting why they're a good fit")
@@ -53,6 +64,7 @@ class BatchScholarshipResponse(BaseModel):
 
 def batch_analyze_scholarships(user_profile: dict, scholarships: list):
     """Score a batch of scholarships (max 10) against a user profile."""
+    client = get_gemini_client()
     if not client: return json.dumps({"matches": []})
     
     profile_str = "\n".join([f"{k}: {v}" for k, v in user_profile.items() if v and k != 'experiences'])
@@ -80,6 +92,7 @@ def batch_analyze_scholarships(user_profile: dict, scholarships: list):
         return json.dumps({"matches": []})
 
 def analyze_scholarship_match(user_profile: dict, scholarship_details: str):
+    client = get_gemini_client()
     if not client: return '{"error": "API Key missing"}'
     profile_str = "\n".join([f"{k}: {v}" for k, v in user_profile.items() if v])
     prompt = f"Analyze the fit between this student and the following scholarship.\n\nStudent Profile:\n{profile_str}\n\nScholarship Details:\n{scholarship_details}"
@@ -100,6 +113,7 @@ def analyze_scholarship_match(user_profile: dict, scholarship_details: str):
         return json.dumps({"match_score": 0, "key_strengths": ["Error analyzing match"], "essay_outline": ["Please try again later"]})
 
 def parse_resume(resume_text: str):
+    client = get_gemini_client()
     if not client: 
         return {
             "institution": "Unknown", "major": "Unknown", "degree": "Undergraduate",
@@ -143,6 +157,9 @@ def parse_resume(resume_text: str):
 app = Flask(__name__)
 app.secret_key = os.getenv('AUTH0_SECRET')
 
+# Fix Flask behind Nginx reverse proxy: trust X-Forwarded-* headers
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 # Database configuration 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "scholarships.db")}'
@@ -153,11 +170,13 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-# Configure session for Auth0
+# Configure session for Auth0 behind HTTP reverse proxy
 app.config.update(
-    SESSION_COOKIE_SECURE=False,  # Set to True in production with HTTPS
+    SESSION_COOKIE_SECURE=False,     # False because we're on HTTP (set True with HTTPS)
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SAMESITE='Lax',   # Lax is fine for same-domain Auth0 redirects
+    SESSION_COOKIE_NAME='session',   # Explicit cookie name
+    PERMANENT_SESSION_LIFETIME=3600, # 1-hour session lifetime
 )
 
 @app.before_request
