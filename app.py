@@ -3,14 +3,13 @@ load_dotenv(override=True) # Load env vars before anything else
 
 import os
 from flask import Flask, request, g
-from types import SimpleNamespace
 from auth import auth0
 from routes import main_bp
 from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
 import json
-from models import db, User
+from models import db, User, UserScholarshipScore
 
 load_dotenv(override=True)
 api_key = os.getenv('GEMINI_API_KEY')
@@ -164,8 +163,8 @@ app.config.update(
 
 @app.before_request
 def store_request_response():
-    """Make request/response available for Auth0 SDK. Uses SimpleNamespace for attribute access."""
-    g.store_options = SimpleNamespace(request=request, return_to=None)
+    """Make request/response available for Auth0 SDK"""
+    g.store_options = {"request": request}
 
 # Register the blueprint containing all routes
 app.register_blueprint(main_bp)

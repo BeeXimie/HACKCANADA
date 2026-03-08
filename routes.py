@@ -1,21 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, g, jsonify, session
 from auth import auth0, run_async
-from models import db, User
-import os
 import json
 import sqlite3
-
-from functools import wraps
+from sqlalchemy import text
+from models import db, User, UserScholarshipScore
 
 main_bp = Blueprint('main', __name__)
-
-def requires_auth(f):
-    @wraps(f)
-    async def decorated(*args, **kwargs):
-        if 'user' not in session:
-            return jsonify({"error": "Unauthorized"}), 401
-        return await f(*args, **kwargs)
-    return decorated
 
 # --- Authentication & User Profile Routes ---
 
@@ -42,14 +32,8 @@ def callback():
         user = run_async(auth0.get_user(g.store_options))
         session["user"] = user
         
-        # Check if user exists in the database
-        db_user = User.query.filter_by(auth0_sub=user['sub']).first()
-        
-        if not db_user:
-            # New User Found! Redirect to the Onboarding flow
-            return redirect(url_for('main.onboarding'))
-            
-        return redirect("http://localhost:3000/")
+        # Dynamic redirect back to the app home
+        return redirect(url_for('main.index'))
     except Exception as e:
         return f"Authentication error: {str(e)}", 400
 
@@ -327,7 +311,7 @@ async def onboarding_confirm():
         db.session.commit()
         session['scholarship_profile'] = profile
         session['onboarding_complete'] = True
-        return redirect('http://localhost:3000/')
+        return redirect(url_for('main.index'))
     
     return render_template('onboarding_confirm.html', user=user, profile=profile)
 
@@ -398,13 +382,10 @@ def scholarships():
     return render_template('scholarships.html', user=user, scholarships=scholarships_data)
 
 @main_bp.route('/api/scholarships/score', methods=['POST'])
-@main_bp.route('/api/recommendations', methods=['POST'])
 def api_score_scholarships():
     print("DEBUG: Received scoring request")
     """Batch score a set of scholarships for the current user."""
     from app import batch_analyze_scholarships
-    from models import UserScholarshipScore
-    from sqlalchemy import text
     
     user = session.get("user")
     if not user:
@@ -445,14 +426,6 @@ def api_score_scholarships():
 
     # Call Gemini
     profile = db_user.to_dict()
-    
-    # DEBUG LOGGING for AI Verification
-    print(f"--- AI MATCHING CONTEXT ---")
-    print(f"User Major: {profile.get('major')}")
-    print(f"User GPA: {profile.get('gpa')}")
-    print(f"User Interests: {profile.get('interests')}")
-    print(f"---------------------------")
-    
     print(f"DEBUG: Scoring {len(scholarships_to_score)} scholarships for user {db_user.id}")
     ai_response_json = batch_analyze_scholarships(profile, scholarships_to_score)
     print(f"DEBUG: Gemini response: {ai_response_json[:200]}...")
@@ -486,8 +459,12 @@ def api_score_scholarships():
 
 @main_bp.route('/recommendations')
 def recommendations():
-    """Redirect recommendations to dashboard"""
-    return redirect(url_for('main.index'))
+    """Recommendations page"""
+    user = session.get("user")
+    if not user:
+        return redirect(url_for('main.login'))
+        
+    return render_template('recommendations.html', user=user)
 
 # --- API Routes (Gemini Integration Placeholder) ---
 
@@ -634,7 +611,6 @@ async def save_user_profile():
             # Future: save to Cloudinary/Disk
 
     # Delete existing scores to force a re-evaluation on next "Match"
-    from models import UserScholarshipScore
     db.session.flush() # Ensure db_user.id exists
     UserScholarshipScore.query.filter_by(user_id=db_user.id).delete()
 
@@ -732,45 +708,4 @@ def draft_essay_real():
         return jsonify({"draft": "• AI Error: Failed to generate response.\n• Please check API key status.\n• Ensure the backend is connected to the internet."})
     
 
-@main_bp.route('/api/user/delete', methods=['POST'])
-@requires_auth
-async def delete_account():
-    """Deletes the current user and all associated data."""
-    user = session.get("user")
-    
-    db_user = User.query.filter_by(auth0_sub=user['sub']).first()
-    
-    if db_user:
-        try:
-            # 1. Delete scoring data
-            db.session.execute(db.text("DELETE FROM user_scholarship_scores WHERE user_id = :uid"), {"uid": db_user.id})
-            
-            # 2. Delete applications (placeholder for future/other tables)
-            try:
-                db.session.execute(db.text("DELETE FROM user_applications WHERE user_id = :uid"), {"uid": db_user.id})
-            except:
-                pass # Table might not exist yet
-                
-            # 3. Delete essays (placeholder for future/other tables)
-            try:
-                db.session.execute(db.text("DELETE FROM user_essays WHERE user_id = :uid"), {"uid": db_user.id})
-            except:
-                pass # Table might not exist yet
-                
-            # 4. Delete the user
-            db.session.delete(db_user)
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({"error": f"Failed to delete account data: {str(e)}"}), 500
-    
-    # Clear session
-    session.clear()
-    
-    # Get Auth0 logout URL
-    logout_url = run_async(auth0.logout(g.store_options))
-    
-    return jsonify({
-        "status": "success",
-        "logout_url": logout_url
-    })
+
