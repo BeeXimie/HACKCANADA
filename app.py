@@ -44,13 +44,49 @@ class ResumeProfile(BaseModel):
     experiences: list[ExperienceEntry] = Field(description="List of professional or academic experiences")
     interests: list[str] = Field(description="Relevant academic/professional interests")
 
+class ScholarshipMatch(BaseModel):
+    scholarship_id: int = Field(description="The ID of the scholarship being scored")
+    match_score: int = Field(description="Score from 0 to 100")
+    reasoning: str = Field(description="A 1-sentence explanation of the score")
+
+class BatchScholarshipResponse(BaseModel):
+    matches: list[ScholarshipMatch] = Field(description="List of scores for the provided scholarships")
+
+def batch_analyze_scholarships(user_profile: dict, scholarships: list):
+    """Score a batch of scholarships (max 10) against a user profile."""
+    if not client: return json.dumps({"matches": []})
+    
+    profile_str = "\n".join([f"{k}: {v}" for k, v in user_profile.items() if v and k != 'experiences'])
+    
+    scholarships_str = ""
+    for s in scholarships:
+        scholarships_str += f"ID: {s['id']}\nTitle: {s['title']}\nDescription: {s['description']}\nEligibility: {s['eligibility']}\n\n"
+        
+    prompt = f"Analyze the fit between this student and these scholarships. Return a score from 0-100 for each.\n\nStudent Profile:\n{profile_str}\n\nScholarships:\n{scholarships_str}"
+    
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.0-flash", # Use 2.0 Flash for speed/cost
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction="You are an expert scholarship matchmaker. Score each scholarship based on how well it fits the student's profile. 100 = perfect fit, 0 = not eligible.",
+                response_mime_type="application/json",
+                response_schema=BatchScholarshipResponse,
+                temperature=0.1,
+            ),
+        )
+        return response.text
+    except Exception as e:
+        print(f"Gemini Batch Analysis Error: {e}")
+        return json.dumps({"matches": []})
+
 def analyze_scholarship_match(user_profile: dict, scholarship_details: str):
     if not client: return '{"error": "API Key missing"}'
     profile_str = "\n".join([f"{k}: {v}" for k, v in user_profile.items() if v])
     prompt = f"Analyze the fit between this student and the following scholarship.\n\nStudent Profile:\n{profile_str}\n\nScholarship Details:\n{scholarship_details}"
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-2.0-flash",
             contents=prompt, 
             config=types.GenerateContentConfig(
                 system_instruction="You are an expert college guidance counselor. Analyze the student's fit for the scholarship based strictly on their provided profile.",
@@ -108,8 +144,9 @@ def parse_resume(resume_text: str):
 app = Flask(__name__)
 app.secret_key = os.getenv('AUTH0_SECRET')
 
-# Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///scholarships.db'
+# Database configuration 
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "scholarships.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)

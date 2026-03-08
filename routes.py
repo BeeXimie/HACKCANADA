@@ -303,7 +303,7 @@ async def onboarding_confirm():
         db.session.commit()
         session['scholarship_profile'] = profile
         session['onboarding_complete'] = True
-        return redirect('http://localhost:5000/')
+        return redirect('http://localhost:3000/')
     
     return render_template('onboarding_confirm.html', user=user, profile=profile)
 
@@ -349,9 +349,91 @@ def scholarships():
     if not user:
         return redirect(url_for('main.login'))
         
-    scholarships_data = []
+    db_user = User.query.filter_by(auth0_sub=user['sub']).first()
+    # Allow viewing even if not fully onboarded (no profile)
+    user_id = db_user.id if db_user else 0
+
+    # Join scholarships with scores if they exist
+    from sqlalchemy import text
+    query = text("""
+        SELECT s.*, us.score as match_score, us.reasoning as match_reasoning
+        FROM ouinfo_scholarships s
+        LEFT JOIN user_scholarship_scores us ON s.id = us.scholarship_id AND us.user_id = :user_id
+        ORDER BY CASE WHEN us.score IS NULL THEN 0 ELSE 1 END DESC, us.score DESC, s.title ASC
+    """)
+    
+    result = db.session.execute(query, {"user_id": user_id})
+    scholarships_data = [dict(row._mapping) for row in result]
     
     return render_template('scholarships.html', user=user, scholarships=scholarships_data)
+
+def api_score_scholarships():
+    print("DEBUG: Received scoring request")
+    """Batch score a set of scholarships for the current user."""
+    from app import batch_analyze_scholarships
+    from models import UserScholarshipScore
+    
+    user = session.get("user")
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    db_user = User.query.filter_by(auth0_sub=user['sub']).first()
+    if not db_user:
+        return jsonify({"error": "User not found"}), 404
+        
+    # Get scholarships to score (limit to 10 for safety/speed per call)
+    data = request.get_json(silent=True) or {}
+    scholarship_ids = data.get('ids', [])
+    
+    if not scholarship_ids:
+        # If no IDs provided, find the top 10 un-scored scholarships
+        query = text("""
+            SELECT id, title, description, eligibility 
+            FROM ouinfo_scholarships 
+            WHERE id NOT IN (SELECT scholarship_id FROM user_scholarship_scores WHERE user_id = :user_id)
+            LIMIT 10
+        """)
+        scholarships_to_score = [dict(row._mapping) for row in db.session.execute(query, {"user_id": db_user.id})]
+    else:
+        # Find specific scholarships
+        query = text("SELECT id, title, description, eligibility FROM ouinfo_scholarships WHERE id IN :ids")
+        scholarships_to_score = [dict(row._mapping) for row in db.session.execute(query, {"ids": tuple(scholarship_ids)})]
+
+    if not scholarships_to_score:
+        return jsonify({"status": "no_more", "message": "All scholarships are already scored."})
+
+    # Call Gemini
+    profile = db_user.to_dict()
+    print(f"DEBUG: Scoring {len(scholarships_to_score)} scholarships for user {db_user.id}")
+    ai_response_json = batch_analyze_scholarships(profile, scholarships_to_score)
+    print(f"DEBUG: Gemini response: {ai_response_json[:200]}...")
+    ai_data = json.loads(ai_response_json)
+    
+    matches = ai_data.get('matches', [])
+    for match in matches:
+        sid = match['scholarship_id']
+        # Update or Create score
+        existing = UserScholarshipScore.query.filter_by(user_id=db_user.id, scholarship_id=sid).first()
+        if existing:
+            existing.score = match['match_score']
+            existing.reasoning = match['reasoning']
+        else:
+            new_score = UserScholarshipScore(
+                user_id=db_user.id,
+                scholarship_id=sid,
+                score=match['match_score'],
+                reasoning=match['reasoning']
+            )
+            db.session.add(new_score)
+            
+    print(f"DEBUG: Saving {len(matches)} scores to database")
+    db.session.commit()
+    
+    return jsonify({
+        "status": "ok", 
+        "scored_count": len(matches),
+        "matches": matches
+    })
 
 @main_bp.route('/recommendations')
 def recommendations():

@@ -66,3 +66,15 @@ class User(db.Model):
                     self.experiences_json = v
                 else:
                     self.experiences_json = json.dumps(v)
+
+class UserScholarshipScore(db.Model):
+    __tablename__ = 'user_scholarship_scores'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    scholarship_id = db.Column(db.Integer, nullable=False) # ID from ouinfo_scholarships
+    score = db.Column(db.Integer)
+    reasoning = db.Column(db.Text)
+    updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+    
+    # Composite unique constraint to avoid duplicate scores per user/scholarship
+    __table_args__ = (db.UniqueConstraint('user_id', 'scholarship_id', name='_user_scholarship_uc'),)

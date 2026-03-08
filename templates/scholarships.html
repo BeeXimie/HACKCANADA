@@ -109,10 +109,25 @@
             <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm card-hover transition-shadow">
               <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h3 class="text-lg font-bold text-slate-900">{{ s.name or s.title or 'Scholarship' }}</h3>
-                  {% if s.amount %}<p class="text-sm text-emerald-600 font-semibold mt-1">${{ s.amount }}</p>{% endif %}
+                  <h3 class="text-lg font-bold text-slate-900">{{ s.title or 'Scholarship' }}</h3>
+                  {% if s.amount %}<p class="text-sm text-emerald-600 font-semibold mt-1">{{ s.amount }}</p>{% endif %}
                   {% if s.deadline %}<p class="text-xs text-slate-500 mt-1">Deadline: {{ s.deadline }}</p>{% endif %}
-                  {% if s.match_score %}<p class="text-xs text-indigo-600 font-medium mt-1">Personalized Match: {{ s.match_score }}%</p>{% endif %}
+                  
+                  {% if s.match_score %}
+                  <div class="mt-3 inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-100">
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-xs font-bold text-indigo-700">{{ s.match_score }}% Match</span>
+                      <div class="w-12 h-1.5 bg-indigo-100 rounded-full overflow-hidden">
+                        <div class="bg-indigo-500 h-full" style="width: {{ s.match_score }}%"></div>
+                      </div>
+                    </div>
+                  </div>
+                  {% if s.match_reasoning %}
+                  <p class="text-[11px] text-slate-500 mt-1 italic">{{ s.match_reasoning }}</p>
+                  {% endif %}
+                  {% else %}
+                  <p class="text-[11px] text-slate-400 mt-2 italic">Not yet scored</p>
+                  {% endif %}
                 </div>
                 <a href="{{ s.url or '#' }}" target="_blank" class="shrink-0 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors">Apply Now</a>
               </div>
@@ -148,8 +163,28 @@
           </div>
         {% endif %}
 
-        <div class="flex gap-3">
-          <a href="/recommendations" class="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors">View AI Recommendations</a>
+        <div class="flex flex-col sm:flex-row gap-3 pt-6 border-t border-slate-200">
+          <button id="match-btn" onclick="startScoring()" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-sm shadow-indigo-100 active:scale-[0.98]">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            Match with AI
+          </button>
+          <a href="/recommendations" class="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all active:scale-[0.98]">View AI Recommendations</a>
+        </div>
+        
+        <!-- Progress Modal (hidden by default) -->
+        <div id="progress-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm hidden">
+          <div class="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl border border-slate-100 flex flex-col items-center text-center">
+            <div class="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center mb-4 relative">
+              <svg class="h-8 w-8 text-indigo-600 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+              <div class="absolute inset-0 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin"></div>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Matching You...</h3>
+            <p class="text-sm text-slate-500 mb-6" id="progress-text">Analyzing scholarships with Gemini AI</p>
+            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
+              <div id="progress-bar" class="h-full bg-indigo-600 transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold" id="progress-stats">0 / -- SCANNED</p>
+          </div>
         </div>
 
       </div>
@@ -166,6 +201,54 @@
       document.getElementById('sidebar').classList.add('-translate-x-full');
       document.getElementById('sidebar-overlay').classList.add('opacity-0','pointer-events-none');
       document.getElementById('sidebar-overlay').classList.remove('opacity-100');
+    }
+
+    async function startScoring() {
+      const modal = document.getElementById('progress-modal');
+      const progressBar = document.getElementById('progress-bar');
+      const progressStats = document.getElementById('progress-stats');
+      const btn = document.getElementById('match-btn');
+
+      modal.classList.remove('hidden');
+      btn.disabled = true;
+      btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+      let finished = false;
+      let totalScored = 0;
+      
+      // We'll score in batches until the API returns "no_more"
+      while (!finished) {
+        try {
+          const response = await fetch('/api/scholarships/score', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+          const data = await response.json();
+
+          if (data.status === 'no_more' || data.scored_count === 0) {
+            finished = true;
+          } else {
+            totalScored += data.scored_count;
+            // Update UI (simple increments for 570 - we'll just show current count)
+            progressStats.innerText = `${totalScored} / 570 SCANNED`;
+            progressBar.style.width = `${Math.min((totalScored / 570) * 100, 100)}%`;
+            
+            // Short break to prevent browser lockup
+            await new Promise(r => setTimeout(r, 200));
+          }
+        } catch (e) {
+          console.error(e);
+          finished = true;
+        }
+      }
+
+      // Final state
+      progressStats.innerText = "ALL MATCHES COMPLETE";
+      progressBar.style.width = "100%";
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     }
   </script>
 </body>

@@ -96,7 +96,7 @@ const OnboardingForm = () => {
             }
         } catch (err) {
             setStatus('error');
-            setErrorMsg('Network error. Is Flask running on port 5000?');
+            setErrorMsg('Network error. Is Flask running on port 3000?');
         }
     };
 
