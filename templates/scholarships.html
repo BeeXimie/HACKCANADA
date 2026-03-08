@@ -216,7 +216,7 @@
       // We'll score in batches until the API returns "no_more"
       while (!finished) {
         try {
-          const response = await fetch('/api/recommendations', {
+          const response = await fetch('/api/scholarships/score', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({})
