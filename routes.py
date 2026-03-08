@@ -42,6 +42,13 @@ def callback():
         user = run_async(auth0.get_user(g.store_options))
         session["user"] = user
         
+        # Check if user exists in the database
+        db_user = User.query.filter_by(auth0_sub=user['sub']).first()
+        
+        if not db_user:
+            # New User Found! Redirect to the Onboarding flow
+            return redirect(url_for('main.onboarding'))
+            
         return redirect("http://localhost:3000/")
     except Exception as e:
         return f"Authentication error: {str(e)}", 400
