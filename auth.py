@@ -4,7 +4,7 @@ import threading
 from auth0_server_python.auth_server.server_client import ServerClient
 from dotenv import load_dotenv
 from flask import session
-from types import SimpleNamespace
+load_dotenv(override=True)
 
 load_dotenv(override=True)
 
@@ -20,6 +20,18 @@ _loop_thread.start()
 def run_async(coro):
     """Helper to dispatch auth0 sdk calls to the persistent event loop"""
     return asyncio.run_coroutine_threadsafe(coro, _shared_loop).result()
+
+class AttributeDict(dict):
+    """A dictionary that allows attribute access to its keys. 
+    This allows the Auth0 SDK to use both attribute access (obj.key) 
+    and dictionary methods (obj.get('key')) interchangeably."""
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(name)
+    def __setattr__(self, name, value):
+        self[name] = value
 
 class FlaskSessionStore:
     """Store Auth0 transaction/state data in Flask's session cookie.
@@ -46,11 +58,11 @@ class FlaskSessionStore:
         return str(value)
 
     def _deserialize(self, value):
-        """Convert stored dicts back to SimpleNamespace for attribute access."""
+        """Convert stored dicts back to AttributeDict for both attribute and dict-like access."""
         if value is None:
             return None
         if isinstance(value, dict):
-            return SimpleNamespace(**{k: self._deserialize(v) for k, v in value.items()})
+            return AttributeDict({k: self._deserialize(v) for k, v in value.items()})
         if isinstance(value, (list, tuple)):
             return [self._deserialize(v) for v in value]
         return value
