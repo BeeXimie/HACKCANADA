@@ -37,19 +37,16 @@ const showFeedback = (message, isError = false) => {
     showFeedback('🪄 ScholarSync activated. Fetching your profile...');
     
     try {
-        const profileResponse = await fetch(`${API_BASE}/user/autofill-data`, {
-            method: 'GET',
-            mode: 'cors',
-            credentials: 'include'
+        // Request background.js to fetch the profile to bypass CORS
+        const response = await new Promise((resolve) => {
+            chrome.runtime.sendMessage({ type: 'FETCH_PROFILE' }, (res) => resolve(res));
         });
 
-        if (!profileResponse.ok) {
-            throw new Error(profileResponse.status === 401 
-                ? 'Please log into ScholarSync first on your local dashboard.' 
-                : 'Failed to fetch profile.');
+        if (!response || !response.success) {
+            throw new Error(response ? response.error : 'Failed to communicate with ScholarSync background service.');
         }
 
-        const profileData = await profileResponse.json();
+        const profileData = response.data;
 
         // Standard inputs
         const inputs = document.querySelectorAll('input, select');
@@ -118,19 +115,16 @@ const showFeedback = (message, isError = false) => {
         if (essayPrompt && targetTextarea && targetTextarea.value.length === 0) {
             showFeedback('🧠 Gemini is thinking about your essay drafting...');
             
-            const aiResponse = await fetch(`${API_BASE}/ai/draft-essay`, {
-                method: 'POST',
-                mode: 'cors',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ prompt: essayPrompt })
+            // Request background.js to draft the essay to bypass CORS
+            const aiResponse = await new Promise((resolve) => {
+                chrome.runtime.sendMessage({ 
+                    type: 'DRAFT_ESSAY', 
+                    prompt: essayPrompt 
+                }, (res) => resolve(res));
             });
 
-            if (aiResponse.ok) {
-                const aiData = await aiResponse.json();
-                targetTextarea.value = aiData.draft;
+            if (aiResponse && aiResponse.success) {
+                targetTextarea.value = aiResponse.data.draft;
                 showFeedback(`✅ ScholarSync applied your data! Filled ${filledCount} fields & drafted essay!`);
                 alert(`ScholarSync applied your data! (Filled ${filledCount} fields & essay)`);
             } else {
