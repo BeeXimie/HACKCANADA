@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, g, jsonify, session
-from auth import auth0
+from auth import auth0, run_async
 import os
 import json
 import sqlite3
@@ -9,55 +9,53 @@ main_bp = Blueprint('main', __name__)
 # --- Authentication & User Profile Routes ---
 
 @main_bp.route('/')
-async def index():
+def index():
     """Home page - Landing page"""
-    user = await auth0.get_user(g.store_options)
+    user = session.get("user")
     return render_template('index.html', user=user)
 
 @main_bp.route('/login')
-async def login():
+def login():
     """Redirect to Auth0 login"""
-    authorization_url = await auth0.start_interactive_login({}, g.store_options)
+    authorization_url = run_async(auth0.start_interactive_login({}, g.store_options))
     return redirect(authorization_url)
 
 @main_bp.route('/callback')
-async def callback():
+def callback():
     """Handle Auth0 callback after login"""
     try:
-        result = await auth0.complete_interactive_login(str(request.url), g.store_options)
+        result = run_async(auth0.complete_interactive_login(str(request.url), g.store_options))
+        session["user"] = result.get("user")
         
-        # Redirect to onboarding if profile is not complete
         profile_complete = session.get('onboarding_complete', False)
         if not profile_complete:
-            return redirect(url_for('main.onboarding'))
+            return redirect("http://localhost:3000/onboarding")
             
-        return redirect(url_for('main.index'))
+        return redirect("http://localhost:3000/")
     except Exception as e:
         return f"Authentication error: {str(e)}", 400
 
 @main_bp.route('/profile')
-async def profile():
+def profile():
     """Protected route - shows user profile"""
-    user = await auth0.get_user(g.store_options)
-    
+    user = session.get("user")
     if not user:
         return redirect(url_for('main.login'))
-    
     return render_template('profile.html', user=user)
 
 @main_bp.route('/logout')
-async def logout():
+def logout():
     """Logout and redirect to Auth0 logout"""
-    session.clear() # Clear session on logout
-    logout_url = await auth0.logout(g.store_options)
+    session.clear()
+    logout_url = run_async(auth0.logout(g.store_options))
     return redirect(logout_url)
 
 # --- Onboarding Route ---
 
 @main_bp.route('/onboarding', methods=['GET', 'POST'])
-async def onboarding():
+def onboarding():
     """Onboarding form flow after login"""
-    user = await auth0.get_user(g.store_options)
+    user = session.get("user")
     if not user:
         return redirect(url_for('main.login'))
         
@@ -71,8 +69,6 @@ async def onboarding():
         profile['location'] = location
         profile['experiences'] = experiences
         
-        # Assuming you will save these files to S3/Disk later, 
-        # for now we'll just track that they've been uploaded in the session
         if resume and resume.filename:
             profile['resume_uploaded'] = True
             profile['resume_filename'] = resume.filename
@@ -81,29 +77,27 @@ async def onboarding():
             profile['transcript_filename'] = transcript.filename
             
         session['scholarship_profile'] = profile
-        session['onboarding_complete'] = True # Mark onboarding as done
+        session['onboarding_complete'] = True 
         
-        return redirect(url_for('main.index'))
+        return redirect("http://localhost:3000/")
         
     return render_template('onboarding.html', user=user)
 
 # --- Feature Routes ---
 
 @main_bp.route('/essay', methods=['GET', 'POST'])
-async def essay():
+def essay():
     """Essay Vault page"""
-    user = await auth0.get_user(g.store_options)
+    user = session.get("user")
     if not user:
         return redirect(url_for('main.login'))
         
     if request.method == 'POST':
-        # Grab all the answers from the form inputs
         q1 = request.form.get('vault_q1', '')
         q2 = request.form.get('vault_q2', '')
         q3 = request.form.get('vault_q3', '')
         q4 = request.form.get('vault_q4', '')
         
-        # Save to session (future: save to DB `essay_vault` table)
         session['essay_vault'] = {
             'q1': q1, 'q2': q2, 'q3': q3, 'q4': q4
         }
@@ -114,54 +108,28 @@ async def essay():
 
 
 @main_bp.route('/applied')
-async def applied():
+def applied():
     """Applied Tracker Kanban page"""
-    user = await auth0.get_user(g.store_options)
+    user = session.get("user")
     if not user:
         return redirect(url_for('main.login'))
     return render_template('applied_tracker.html', user=user)
 
 @main_bp.route('/scholarships')
-async def scholarships():
+def scholarships():
     """Finding scholarships page"""
-    user = await auth0.get_user(g.store_options)
+    user = session.get("user")
     if not user:
         return redirect(url_for('main.login'))
         
     scholarships_data = []
     
-    # ---------------------------------------------------------
-    # TODO: UNCOMMENT ONCE TEAMMATE FINISHES SQLITE SCRAPER DB
-    # ---------------------------------------------------------
-    # try:
-    #     # Connect to the SQLite DB your teammate is building
-    #     conn = sqlite3.connect('scholarships.db')
-    #     conn.row_factory = sqlite3.Row
-    #     cursor = conn.cursor()
-    #     
-    #     # Query scholarships, left joining our custom Gemini match score!
-    #     query = """
-    #         SELECT s.*, m.match_score 
-    #         FROM scholarships s
-    #         LEFT JOIN user_scholarship_matches m 
-    #           ON s.id = m.scholarship_id AND m.user_id = ?
-    #         ORDER BY m.match_score DESC NULLS LAST
-    #     """
-    #     cursor.execute(query, (user['sub'],))
-    #     rows = cursor.fetchall()
-    #     
-    #     # Convert to standard dict for Jinja template
-    #     scholarships_data = [dict(row) for row in rows]
-    #     conn.close()
-    # except Exception as e:
-    #     print(f"Database error: {e}")
-    
     return render_template('scholarships.html', user=user, scholarships=scholarships_data)
 
 @main_bp.route('/recommendations')
-async def recommendations():
+def recommendations():
     """Recommendations page"""
-    user = await auth0.get_user(g.store_options)
+    user = session.get("user")
     if not user:
         return redirect(url_for('main.login'))
         
@@ -170,19 +138,18 @@ async def recommendations():
 # --- API Routes (Gemini Integration Placeholder) ---
 
 @main_bp.route('/api/gemini/analyze', methods=['POST'])
-async def gemini_analyze_api():
-    user = await auth0.get_user(g.store_options)
+def gemini_analyze_api():
+    user = session.get("user")
     if not user:
         return jsonify({"error": "Unauthorized"}), 401
     
     data = request.json
     scholarship_text = data.get("scholarship_details", "")
-
     profile = session.get('scholarship_profile', {})
 
     try:
+        from app import analyze_scholarship_match
         json_result_string = analyze_scholarship_match(profile, scholarship_text)
-
         analysis_dict = json.loads(json_result_string)
 
         return jsonify({
@@ -191,34 +158,22 @@ async def gemini_analyze_api():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-    # TODO: Implement Gemini API call here using google-generativeai package
-    
-    mock_response = {
-        "status": "success",
-        "message": "This is a placeholder for the Gemini response",
-        "insights": [
-            "Based on your profile, you could save $200 more per semester."
-        ]
-    }
-    return jsonify(mock_response)
 
 # --- React Frontend JSON API Endpoints ---
 
 @main_bp.route('/api/auth/profile')
-async def api_profile():
+def api_profile():
     """Return user profile as JSON for the React frontend"""
-    user = await auth0.get_user(g.store_options)
+    user = session.get("user")
     if not user:
         return jsonify({"authenticated": False}), 401
     return jsonify({"authenticated": True, "user": user})
 
 @main_bp.route('/api/auth/logout')
-async def api_logout():
+def api_logout():
     """Return Auth0 logout URL as JSON for the React frontend"""
-    logout_url = await auth0.logout(g.store_options)
+    logout_url = run_async(auth0.logout(g.store_options))
     return jsonify({"logout_url": logout_url})
-
 
 # --- User Profile API ---
 
@@ -230,20 +185,19 @@ PROFILE_FIELDS = [
 ]
 
 @main_bp.route('/api/user/profile', methods=['GET'])
-async def get_user_profile():
+def get_user_profile():
     """Return saved scholarship profile data for the current user."""
-    user = await auth0.get_user(g.store_options)
+    user = session.get("user")
     if not user:
         return jsonify({"error": "Unauthorized"}), 401
-    # TODO: replace session storage with DB lookup keyed on user['sub']
     profile = session.get('scholarship_profile', {})
     return jsonify({"profile": profile})
 
 
 @main_bp.route('/api/user/profile', methods=['POST'])
-async def save_user_profile():
+def save_user_profile():
     """Save scholarship profile data for the current user."""
-    user = await auth0.get_user(g.store_options)
+    user = session.get("user")
     if not user:
         return jsonify({"error": "Unauthorized"}), 401
 
@@ -251,11 +205,6 @@ async def save_user_profile():
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    # Whitelist only known fields
     profile = {k: data.get(k, '') for k in PROFILE_FIELDS}
-    # TODO: swap session storage for a DB upsert keyed on user['sub']
     session['scholarship_profile'] = profile
     return jsonify({"status": "ok", "profile": profile})
-
-
-

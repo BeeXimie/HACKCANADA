@@ -10,7 +10,7 @@ from google.genai import types
 from pydantic import BaseModel, Field
 
 
-load_dotenv()
+load_dotenv(override=True)
 print(f"API Key loaded: {os.getenv('GEMINI_API_KEY')[:5]}...") # Just to verify it's working
 
 client = genai.Client()
