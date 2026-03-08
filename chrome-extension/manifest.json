@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "ScholarSync Autofill",
+  "version": "1.0",
+  "description": "Autofill scholarship applications with Gemini AI",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://localhost:5000/*"
+  ]
+}

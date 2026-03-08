@@ -592,3 +592,64 @@ async def save_user_profile():
     profile = db_user.to_dict()
     session['scholarship_profile'] = profile
     return jsonify({"status": "ok", "profile": profile})
+
+# --- Magic Bookmarklet API Endpoints ---
+
+@main_bp.route('/api/user/autofill-data', methods=['GET'])
+def get_autofill_data():
+    """Return user profile data formatted for bookmarklet autofill."""
+    user = session.get("user")
+    if not user:
+        return jsonify({"error": "Unauthorized. Please log into ScholarSync first."}), 401
+    
+    profile = session.get('scholarship_profile', {})
+    
+    # Extract names from Auth0 user object reliably
+    full_name = user.get('name', '')
+    first_name = full_name.split(' ')[0] if full_name else ''
+    last_name = ' '.join(full_name.split(' ')[1:]) if len(full_name.split(' ')) > 1 else ''
+
+    # We format this specifically for the JS bookmarklet to consume easily
+    autofill_data = {
+        "firstName": first_name,
+        "lastName": last_name,
+        "email": user.get('email', ''),
+        "gpa": profile.get('gpa', ''),
+        "major": profile.get('major', ''),
+        "institution": profile.get('institution', ''),
+        "location": profile.get('location', '')
+    }
+    
+    return jsonify(autofill_data)
+
+@main_bp.route('/api/ai/draft-essay', methods=['POST'])
+def draft_essay_mock():
+    """Mock endpoint for Gemini AI essay drafting."""
+    user = session.get("user")
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    if not data or 'prompt' not in data:
+        return jsonify({"error": "No prompt provided"}), 400
+        
+    scholarship_prompt = data.get('prompt')
+    
+    # --- TODO for teammate: Replace this block with actual Gemini AI Call ---
+    # Example using google-genai SDK:
+    # prompt = f"Write a 3-bullet response to this scholarship prompt: '{scholarship_prompt}' based on User info: {session.get('scholarship_profile')}"
+    # response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+    # return jsonify({"draft": response.text})
+    
+    # Simulated 3-bullet-point response
+    mock_response = (
+        "• Highlighted my 3.9 GPA and alignment with Computer Science.\n"
+        "• Emphasized leadership experience from my extracurricular activities.\n"
+        "• Connected my personal background directly to the scholarship's mission."
+    )
+    
+    import time
+    time.sleep(1.5) # Simulate API latency so the user sees the 'Gemini is thinking' state
+    
+    return jsonify({"draft": mock_response})
+
