@@ -602,7 +602,12 @@ def get_autofill_data():
     if not user:
         return jsonify({"error": "Unauthorized. Please log into ScholarSync first."}), 401
     
-    profile = session.get('scholarship_profile', {})
+    # Query the live database for this user's profile
+    db_user = User.query.filter_by(auth0_sub=user['sub']).first()
+    if db_user:
+        profile = db_user.to_dict()
+    else:
+        profile = session.get('scholarship_profile', {})
     
     # Extract names from Auth0 user object reliably
     full_name = user.get('name', '')
@@ -623,8 +628,10 @@ def get_autofill_data():
     return jsonify(autofill_data)
 
 @main_bp.route('/api/ai/draft-essay', methods=['POST'])
-def draft_essay_mock():
-    """Mock endpoint for Gemini AI essay drafting."""
+def draft_essay_real():
+    """Live endpoint for Gemini AI essay drafting using the Chrome Extension."""
+    from app import client # Import Gemini client from main app
+    
     user = session.get("user")
     if not user:
         return jsonify({"error": "Unauthorized"}), 401
@@ -635,21 +642,44 @@ def draft_essay_mock():
         
     scholarship_prompt = data.get('prompt')
     
-    # --- TODO for teammate: Replace this block with actual Gemini AI Call ---
-    # Example using google-genai SDK:
-    # prompt = f"Write a 3-bullet response to this scholarship prompt: '{scholarship_prompt}' based on User info: {session.get('scholarship_profile')}"
-    # response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
-    # return jsonify({"draft": response.text})
+    # Fetch from SQLite database
+    db_user = User.query.filter_by(auth0_sub=user['sub']).first()
+    if db_user:
+        profile = db_user.to_dict()
+    else:
+        # Fallback to session if no db record yet
+        profile = session.get('scholarship_profile', {})
+        
+    profile_str = "\n".join([f"{k}: {v}" for k, v in profile.items() if v and k != 'experiences'])
     
-    # Simulated 3-bullet-point response
-    mock_response = (
-        "• Highlighted my 3.9 GPA and alignment with Computer Science.\n"
-        "• Emphasized leadership experience from my extracurricular activities.\n"
-        "• Connected my personal background directly to the scholarship's mission."
+    # Append experiences context
+    experiences = profile.get('experiences', [])
+    if experiences:
+        profile_str += "\nExperiences:\n"
+        for exp in experiences:
+            profile_str += f"- {exp.get('role')} at {exp.get('company')}: {exp.get('description')}\n"
+
+    # Construct Prompt
+    ai_prompt = (
+        f"You are an expert college guidance counselor. "
+        f"A student is applying for a scholarship. "
+        f"Based on their profile below, write a compelling, tailored 3-bullet-point "
+        f"response addressing the following scholarship prompt:\n\n"
+        f"Scholarship Prompt: '{scholarship_prompt}'\n\n"
+        f"Student Profile:\n{profile_str}\n\n"
+        f"Output exactly 3 bullet points, each starting with '• '."
     )
     
-    import time
-    time.sleep(1.5) # Simulate API latency so the user sees the 'Gemini is thinking' state
+    try:
+        from google import genai
+        response = client.models.generate_content(
+            model='gemini-2.0-flash', 
+            contents=ai_prompt
+        )
+        return jsonify({"draft": response.text})
+    except Exception as e:
+        print(f"Gemini API Error in Chrome Extension: {e}")
+        return jsonify({"draft": "• AI Error: Failed to generate response.\n• Please check API key status.\n• Ensure the backend is connected to the internet."})
     
-    return jsonify({"draft": mock_response})
+
 

@@ -3,50 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mock Scholarship Application Form</title>
+    <title>Global Leaders Scholarship Application</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: sans-serif; padding: 40px; background: #f4f4f9; }
-        .form-container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 8px; shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .field { margin-bottom: 20px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; }
-        input[type="text"], input[type="email"], textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        textarea { height: 150px; }
-        button { padding: 10px 20px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .header { text-align: center; margin-bottom: 30px; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .form-section { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); padding: 2rem; margin-bottom: 2rem; }
     </style>
 </head>
-<body>
-    <div class="form-container">
-        <div class="header">
-            <h1>Test Scholarship Application</h1>
-            <p>Use the 🪄 Magic Bookmarklet or ScholarSync Extension to autofill this form!</p>
+<body class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto">
+        
+        <div class="mb-8 text-center">
+            <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Global Leaders Scholarship 2026</h1>
+            <p class="text-slate-500">Please fill out your application below. All fields are required.</p>
         </div>
-        <form>
-            <div class="field">
-                <label for="first_name">First Name</label>
-                <input type="text" id="first_name" name="first_name" placeholder="Enter your first name">
+
+        <form id="application-form" class="space-y-8">
+            
+            <!-- Personal Information Section (Testing Fuzzy Match) -->
+            <div class="form-section">
+                <h2 class="text-xl font-bold text-slate-800 mb-6 border-b pb-2">1. Personal Details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="first-name-input" class="block text-sm font-medium text-slate-700 mb-1">Applicant First Name</label>
+                        <input type="text" id="first-name-input" name="applicant_fname" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label for="last-name-input" class="block text-sm font-medium text-slate-700 mb-1">Applicant Last Name</label>
+                        <input type="text" id="last-name-input" name="applicant_lname" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                    </div>
+                    <div class="col-span-2">
+                        <label for="contact-email" class="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+                        <input type="email" id="contact-email" name="email_addr" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                    </div>
+                </div>
             </div>
-            <div class="field">
-                <label for="last_name">Last Name</label>
-                <input type="text" id="last_name" name="last_name" placeholder="Enter your last name">
+
+            <!-- Academic Information Section (Testing DB Extraction) -->
+            <div class="form-section">
+                <h2 class="text-xl font-bold text-slate-800 mb-6 border-b pb-2">2. Academic Background</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="col-span-2">
+                        <label for="university_name" class="block text-sm font-medium text-slate-700 mb-1">Current College/University</label>
+                        <input type="text" id="university_name" name="college" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label for="primary_major" class="block text-sm font-medium text-slate-700 mb-1">Field of Study (Major)</label>
+                        <input type="text" id="primary_major" name="study_field" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label for="candidate_gpa" class="block text-sm font-medium text-slate-700 mb-1">Cumulative GPA</label>
+                        <input type="text" id="candidate_gpa" name="grade_point" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                    </div>
+                </div>
             </div>
-            <div class="field">
-                <label for="email">Email Address</label>
-                <input type="email" id="user_email" name="email" placeholder="Enter your email">
+
+            <!-- Essay Prompt Section (Testing Gemini Action) -->
+            <div class="form-section">
+                <h2 class="text-xl font-bold text-slate-800 mb-6 border-b pb-2">3. Short Answer Essay</h2>
+                <div>
+                    <label for="essay-response" class="block text-sm font-medium text-slate-700 mb-2">
+                        <strong>Prompt:</strong> We are looking for individuals who use their academic background to solve real-world problems. Describe a time you applied what you learned in your major to make a positive impact in your community. (250 words max)
+                    </label>
+                    <textarea id="essay-response" name="short_essay" rows="6" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" placeholder="Write your response here... Alternatively, try using the Magic Fill extension!"></textarea>
+                </div>
             </div>
-            <div class="field">
-                <label for="gpa">Current GPA (%)</label>
-                <input type="text" id="student_gpa" name="gpa" placeholder="e.g. 90">
+            
+            <!-- Submit Button -->
+            <div class="flex justify-end">
+                <button type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all">
+                    Submit Application
+                </button>
             </div>
-            <div class="field">
-                <label for="major">Major / Field of Study</label>
-                <input type="text" id="major_field" name="major" placeholder="e.g. Computer Science">
-            </div>
-            <div class="field">
-                <label for="essay_prompt">Essay: Why do you deserve this scholarship? (Prompt)</label>
-                <textarea id="essay_response" name="personal_statement" placeholder="Write your essay here or use Gemini to draft one..."></textarea>
-            </div>
-            <button type="button" onclick="alert('Form submitted!')">Submit Application</button>
         </form>
     </div>
 </body>
