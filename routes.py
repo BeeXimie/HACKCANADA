@@ -367,6 +367,7 @@ def scholarships():
     
     return render_template('scholarships.html', user=user, scholarships=scholarships_data)
 
+@main_bp.route('/api/scholarships/score', methods=['POST'])
 def api_score_scholarships():
     print("DEBUG: Received scoring request")
     """Batch score a set of scholarships for the current user."""
