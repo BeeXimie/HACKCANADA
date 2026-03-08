@@ -398,6 +398,7 @@ def scholarships():
     return render_template('scholarships.html', user=user, scholarships=scholarships_data)
 
 @main_bp.route('/api/scholarships/score', methods=['POST'])
+@main_bp.route('/api/recommendations', methods=['POST'])
 def api_score_scholarships():
     print("DEBUG: Received scoring request")
     """Batch score a set of scholarships for the current user."""
@@ -444,6 +445,14 @@ def api_score_scholarships():
 
     # Call Gemini
     profile = db_user.to_dict()
+    
+    # DEBUG LOGGING for AI Verification
+    print(f"--- AI MATCHING CONTEXT ---")
+    print(f"User Major: {profile.get('major')}")
+    print(f"User GPA: {profile.get('gpa')}")
+    print(f"User Interests: {profile.get('interests')}")
+    print(f"---------------------------")
+    
     print(f"DEBUG: Scoring {len(scholarships_to_score)} scholarships for user {db_user.id}")
     ai_response_json = batch_analyze_scholarships(profile, scholarships_to_score)
     print(f"DEBUG: Gemini response: {ai_response_json[:200]}...")
@@ -477,12 +486,8 @@ def api_score_scholarships():
 
 @main_bp.route('/recommendations')
 def recommendations():
-    """Recommendations page"""
-    user = session.get("user")
-    if not user:
-        return redirect(url_for('main.login'))
-        
-    return render_template('recommendations.html', user=user)
+    """Redirect recommendations to dashboard"""
+    return redirect(url_for('main.index'))
 
 # --- API Routes (Gemini Integration Placeholder) ---
 
