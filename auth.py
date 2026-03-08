@@ -4,6 +4,7 @@ import threading
 from auth0_server_python.auth_server.server_client import ServerClient
 from dotenv import load_dotenv
 from flask import session
+from types import SimpleNamespace
 
 load_dotenv(override=True)
 
@@ -44,8 +45,19 @@ class FlaskSessionStore:
                     if not k.startswith('_')}
         return str(value)
 
+    def _deserialize(self, value):
+        """Convert stored dicts back to SimpleNamespace for attribute access."""
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            return SimpleNamespace(**{k: self._deserialize(v) for k, v in value.items()})
+        if isinstance(value, (list, tuple)):
+            return [self._deserialize(v) for v in value]
+        return value
+
     async def get(self, key, options=None):
-        return session.get(f"{self._prefix}:{key}")
+        data = session.get(f"{self._prefix}:{key}")
+        return self._deserialize(data)
 
     async def set(self, key, value, options=None):
         session[f"{self._prefix}:{key}"] = self._serialize(value)
