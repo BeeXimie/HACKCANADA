@@ -20,15 +20,27 @@ def run_async(coro):
     """Helper to dispatch auth0 sdk calls to the persistent event loop"""
     return asyncio.run_coroutine_threadsafe(coro, _shared_loop).result()
 
-class MemoryStore:
-    def __init__(self): self._data = {}
-    async def get(self, key, options=None): return self._data.get(key)
-    async def set(self, key, value, options=None): self._data[key] = value
-    async def delete(self, key, options=None): self._data.pop(key, None)
-    async def delete_by_logout_token(self, claims, options=None): pass
+class FlaskSessionStore:
+    """Store Auth0 transaction/state data in Flask's session cookie.
+    This ensures data persists across Gunicorn workers since the session
+    is serialized into a browser cookie, not held in process memory."""
+    def __init__(self, prefix):
+        self._prefix = prefix
 
-state_store = MemoryStore()
-transaction_store = MemoryStore()
+    async def get(self, key, options=None):
+        return session.get(f"{self._prefix}:{key}")
+
+    async def set(self, key, value, options=None):
+        session[f"{self._prefix}:{key}"] = value
+
+    async def delete(self, key, options=None):
+        session.pop(f"{self._prefix}:{key}", None)
+
+    async def delete_by_logout_token(self, claims, options=None):
+        pass
+
+state_store = FlaskSessionStore("auth0_state")
+transaction_store = FlaskSessionStore("auth0_txn")
 
 auth0 = ServerClient(
     domain=os.getenv('AUTH0_DOMAIN'),
