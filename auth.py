@@ -4,11 +4,6 @@ import threading
 from auth0_server_python.auth_server.server_client import ServerClient
 from dotenv import load_dotenv
 from flask import session
-<<<<<<< HEAD
-from models import db, User, UserScholarshipScore
-=======
-load_dotenv(override=True)
->>>>>>> c328bac88b4696c398e21c1705df0ddbc4d40ea7
 
 # The load_dotenv call is removed from here to prevent duplicate loads,
 # assuming it's handled elsewhere (e.g., in app.py or wsgi.py)

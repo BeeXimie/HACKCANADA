@@ -13,21 +13,15 @@ from pydantic import BaseModel, Field
 import json
 from models import db, User, UserScholarshipScore
 
-<<<<<<< HEAD
 api_key = os.getenv('GEMINI_API_KEY')
 if api_key:
     print(f"DEBUG: Using GEMINI_API_KEY: {api_key[:8]}...{api_key[-4:]}")
-    # Explicitly pass api_key to the client
-    client = genai.Client(api_key=api_key)
-else:
-=======
-load_dotenv(override=True)
 
 def get_gemini_client():
-    api_key = os.getenv('GEMINI_API_KEY')
-    if api_key:
-        return genai.Client(api_key=api_key)
->>>>>>> c328bac88b4696c398e21c1705df0ddbc4d40ea7
+    key = os.getenv('GEMINI_API_KEY')
+    if key:
+        return genai.Client(api_key=key)
+    return None
     print("WARNING: GEMINI_API_KEY not found in environment. AI features will be disabled.")
     return None
 class ScholarshipAnalysis(BaseModel):

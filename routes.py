@@ -40,7 +40,6 @@ def callback():
         user = run_async(auth0.get_user(g.store_options))
         session["user"] = user
         
-<<<<<<< HEAD
         # Check if user needs onboarding
         db_user = User.query.filter_by(auth0_sub=user['sub']).first()
         if not db_user or not db_user.location:
@@ -49,16 +48,6 @@ def callback():
             
         # Dynamic redirect back to the app home
         return redirect(url_for('main.index'))
-=======
-        # Check if user exists in the database
-        db_user = User.query.filter_by(auth0_sub=user['sub']).first()
-        if not db_user:
-            # New user, redirect to onboarding
-            return redirect('/onboarding')
-        else:
-            # Existing user, redirect to React Dashboard
-            return redirect('/dashboard')
->>>>>>> c328bac88b4696c398e21c1705df0ddbc4d40ea7
     except Exception as e:
         return f"Authentication error: {str(e)}", 400
 
@@ -650,41 +639,6 @@ async def save_user_profile():
     session['scholarship_profile'] = profile
     return jsonify({"status": "ok", "profile": profile})
     
-@main_bp.route('/api/user/delete', methods=['POST'])
-async def delete_user_account():
-    """Permanently delete user's profile and data from the database."""
-    user = session.get("user")
-    if not user:
-        return jsonify({"error": "Unauthorized"}), 401
-    
-    db_user = User.query.filter_by(auth0_sub=user['sub']).first()
-    if not db_user:
-        return jsonify({"error": "User not found"}), 404
-    
-    try:
-        # 1. Delete associated scholarship scores
-        UserScholarshipScore.query.filter_by(user_id=db_user.id).delete()
-        
-        # 2. Delete the user profile
-        db.session.delete(db_user)
-        db.session.commit()
-        
-        # 3. Generate Auth0 logout URL before clearing the session
-        logout_url = await auth0.logout(g.store_options)
-        
-        # 4. Clear the Flask session
-        session.clear()
-        
-        return jsonify({
-            "status": "success",
-            "message": "Account deleted successfully",
-            "logout_url": logout_url
-        })
-    except Exception as e:
-        db.session.rollback()
-        print(f"Delete Account Error: {e}")
-        return jsonify({"error": str(e)}), 500
-
 @main_bp.route('/api/user/delete', methods=['POST'])
 def delete_user_account():
     """Permanently delete user account and all data via form submission."""
