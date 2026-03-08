@@ -32,8 +32,14 @@ def callback():
         user = run_async(auth0.get_user(g.store_options))
         session["user"] = user
         
-        # Dynamic redirect back to the app home
-        return redirect(url_for('main.index'))
+        # Check if user exists in the database
+        db_user = User.query.filter_by(auth0_sub=user['sub']).first()
+        if not db_user:
+            # New user, redirect to onboarding
+            return redirect('/onboarding')
+        else:
+            # Existing user, redirect to React Dashboard
+            return redirect('/dashboard')
     except Exception as e:
         return f"Authentication error: {str(e)}", 400
 
@@ -691,7 +697,7 @@ def get_autofill_data():
 @main_bp.route('/api/ai/draft-essay', methods=['POST'])
 def draft_essay_real():
     """Live endpoint for Gemini AI essay drafting using the Chrome Extension."""
-    from app import client # Import Gemini client from main app
+    from app import get_gemini_client
     
     user = session.get("user")
     if not user:
@@ -733,6 +739,10 @@ def draft_essay_real():
     
     try:
         from google import genai
+        client = get_gemini_client()
+        if not client:
+            return jsonify({"draft": "• AI Error: API Key missing or client failed to initialize.\n• Please check the backend configuration."})
+            
         response = client.models.generate_content(
             model='gemini-2.5-flash', 
             contents=ai_prompt

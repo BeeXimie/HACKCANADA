@@ -14,14 +14,13 @@ import json
 from models import db, User, UserScholarshipScore
 
 load_dotenv(override=True)
-api_key = os.getenv('GEMINI_API_KEY')
-if api_key:
-    print(f"DEBUG: Using GEMINI_API_KEY: {api_key[:8]}...{api_key[-4:]}")
-    # Explicitly pass api_key to the client
-    client = genai.Client(api_key=api_key)
-else:
+
+def get_gemini_client():
+    api_key = os.getenv('GEMINI_API_KEY')
+    if api_key:
+        return genai.Client(api_key=api_key)
     print("WARNING: GEMINI_API_KEY not found in environment. AI features will be disabled.")
-    client = None
+    return None
 class ScholarshipAnalysis(BaseModel):
     match_score: int = Field(description="Score from 0 to 100 on how well the user matches the scholarship")
     key_strengths: list[str] = Field(description="3 bullet points highlighting why they're a good fit")
@@ -56,6 +55,7 @@ class BatchScholarshipResponse(BaseModel):
 
 def batch_analyze_scholarships(user_profile: dict, scholarships: list):
     """Score a batch of scholarships (max 10) against a user profile."""
+    client = get_gemini_client()
     if not client: return json.dumps({"matches": []})
     
     profile_str = "\n".join([f"{k}: {v}" for k, v in user_profile.items() if v and k != 'experiences'])
@@ -83,6 +83,7 @@ def batch_analyze_scholarships(user_profile: dict, scholarships: list):
         return json.dumps({"matches": []})
 
 def analyze_scholarship_match(user_profile: dict, scholarship_details: str):
+    client = get_gemini_client()
     if not client: return '{"error": "API Key missing"}'
     profile_str = "\n".join([f"{k}: {v}" for k, v in user_profile.items() if v])
     prompt = f"Analyze the fit between this student and the following scholarship.\n\nStudent Profile:\n{profile_str}\n\nScholarship Details:\n{scholarship_details}"
@@ -103,6 +104,7 @@ def analyze_scholarship_match(user_profile: dict, scholarship_details: str):
         return json.dumps({"match_score": 0, "key_strengths": ["Error analyzing match"], "essay_outline": ["Please try again later"]})
 
 def parse_resume(resume_text: str):
+    client = get_gemini_client()
     if not client: 
         return {
             "institution": "Unknown", "major": "Unknown", "degree": "Undergraduate",
