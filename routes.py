@@ -673,7 +673,7 @@ def draft_essay_real():
     try:
         from google import genai
         response = client.models.generate_content(
-            model='gemini-2.0-flash', 
+            model='gemini-2.5-flash', 
             contents=ai_prompt
         )
         return jsonify({"draft": response.text})

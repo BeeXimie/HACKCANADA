@@ -66,7 +66,7 @@ def batch_analyze_scholarships(user_profile: dict, scholarships: list):
     
     try:
         response = client.models.generate_content(
-            model="gemini-2.0-flash", # Use 2.0 Flash for speed/cost
+            model="gemini-2.5-flash", # Use 2.5 Flash for speed/cost
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction="You are an expert scholarship matchmaker. Score each scholarship based on how well it fits the student's profile. 100 = perfect fit, 0 = not eligible.",
@@ -86,7 +86,7 @@ def analyze_scholarship_match(user_profile: dict, scholarship_details: str):
     prompt = f"Analyze the fit between this student and the following scholarship.\n\nStudent Profile:\n{profile_str}\n\nScholarship Details:\n{scholarship_details}"
     try:
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             contents=prompt, 
             config=types.GenerateContentConfig(
                 system_instruction="You are an expert college guidance counselor. Analyze the student's fit for the scholarship based strictly on their provided profile.",
