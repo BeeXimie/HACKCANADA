@@ -23,15 +23,32 @@ def run_async(coro):
 class FlaskSessionStore:
     """Store Auth0 transaction/state data in Flask's session cookie.
     This ensures data persists across Gunicorn workers since the session
-    is serialized into a browser cookie, not held in process memory."""
+    is serialized into a browser cookie, not held in process memory.
+    Objects are converted to dicts for JSON serialization."""
     def __init__(self, prefix):
         self._prefix = prefix
+
+    def _serialize(self, value):
+        """Convert complex SDK objects to JSON-safe dicts."""
+        if value is None:
+            return None
+        if isinstance(value, (str, int, float, bool)):
+            return value
+        if isinstance(value, dict):
+            return {k: self._serialize(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [self._serialize(v) for v in value]
+        # For Pydantic models / dataclass-like objects
+        if hasattr(value, '__dict__'):
+            return {k: self._serialize(v) for k, v in vars(value).items()
+                    if not k.startswith('_')}
+        return str(value)
 
     async def get(self, key, options=None):
         return session.get(f"{self._prefix}:{key}")
 
     async def set(self, key, value, options=None):
-        session[f"{self._prefix}:{key}"] = value
+        session[f"{self._prefix}:{key}"] = self._serialize(value)
 
     async def delete(self, key, options=None):
         session.pop(f"{self._prefix}:{key}", None)
